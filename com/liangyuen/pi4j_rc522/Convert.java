@@ -1,4 +1,4 @@
-package com.liangyuen.util;
+package com.liangyuen.pi4j_rc522;
 
 /*
  *  Copyright (c) Liang Yuen, 2016

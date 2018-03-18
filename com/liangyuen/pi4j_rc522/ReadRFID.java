@@ -1,4 +1,4 @@
-package com.liangyuen.idea.raspberryRFID;
+package com.liangyuen.pi4j_rc522;
 
 /**
  * Created by Liang on 2016/3/7.

@@ -1,4 +1,4 @@
-package com.liangyuen.util;
+package com.liangyuen.pi4j_rc522;
 import com.pi4j.wiringpi.Gpio;
 import com.pi4j.wiringpi.Spi;
 
