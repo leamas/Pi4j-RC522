@@ -16,7 +16,7 @@ public class WiringPiSPIExample {
 		String strUID;
 		byte sector = 15, block = 3;
 
-		if (rc522.request(RaspRC522.PICC_REQIDL, back_len) == rc522.MI_OK)
+		if (rc522.setupTranscieve(RaspRC522.PICC_REQIDL, back_len) == rc522.MI_OK)
 			System.out.println("Detecte card:" + back_len[0]);
 		if (rc522.antiColl(tagid) != RaspRC522.MI_OK) {
 			System.out.println("anticoll error");

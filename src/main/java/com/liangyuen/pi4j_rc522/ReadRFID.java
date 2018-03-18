@@ -24,8 +24,11 @@ public class ReadRFID {
         byte sector = 15, block = 2;
         while (true) {
             Thread.sleep(2000);
-            if (rc522.request(RaspRC522.PICC_REQIDL, back_bits) == RaspRC522.MI_OK)
-            System.out.println("Detected:"+back_bits[0]);
+            if (rc522.setupTranscieve(RaspRC522.PICC_REQIDL, back_bits) 
+                == RaspRC522.MI_OK)
+            {
+                System.out.println("Detected:"+back_bits[0]);
+            }
             if (rc522.antiColl(tagid) != RaspRC522.MI_OK)
             {
                 System.out.println("anticoll error");

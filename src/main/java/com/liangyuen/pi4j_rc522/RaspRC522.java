@@ -4,6 +4,17 @@ import com.pi4j.wiringpi.Gpio;
 import com.pi4j.wiringpi.Spi;
 
 /**
+ * 
+ * Basic API for handling the rc-522 RFID reader supporting
+ *   - Tag detection
+ *   - Collision detection
+ *   - Unlocking/locking encrypted dat
+ *   - Reading encrypted data
+ *   - Writing encrypted data.
+ * 
+ * The module is unsynchronized and fails badly if there is more than one 
+ * instance.
+ * 
  * Created by Liang on 2016/3/17,originated from  Python RC522
  *
  *  Copyright (c) Liang Yuen, 2016
@@ -117,36 +128,44 @@ public class RaspRC522
     public static final byte Reserved34        = 0x3F;
 
 
-    
+    /** 
+     * Create a RaspRC532 using speed = 50000  and default reset pin number. 
+     */
     public RaspRC522()
     {
         this(50000, -1);
     }
 
+    /** 
+     * Create a RaspRC532 
+     * 
+     * @param speed transfer speed as defined by com.pi4j.io.spi.imp,
+     *    in range  500kHz - 32MHz.
+     */
     public RaspRC522(int speed)
     {
         this(speed, -1);
     }
 
-    public RaspRC522(int speed, int pinReset)
+    /**
+     *  Create a RaspRC522
+     *  
+     * @param speed transfer speed as defined by com.pi4j.io.spi.imp,
+     *    in range  500kHz - 32MHz.
+     * @param resetPinNumber The pin driven low on interrupt conditions
+     *    in the driver. Defaults to 22.
+     */
+    public RaspRC522(int speed, int resetPinNumber)
     {
-        if (pinReset != -1)
-            this.rstPinNUmber = pinReset;
+        if (resetPinNumber != -1)
+            this.rstPinNUmber = resetPinNumber;
         if (speed < 500000 || speed > 32000000)
             throw new IllegalArgumentException("Speed out of range"); 
         this.speed = speed;
         Gpio.wiringPiSetup();           //Enable wiringPi pin schema
-        int fd=Spi.wiringPiSPISetup(spiChannel,speed);
+        int fd = Spi.wiringPiSPISetup(spiChannel, speed);
         if (fd <= -1)
-        {
-            System.out.println(" --> Failed to set up  SPI communication");
-            //Stop code when error happened
-            return;
-        }
-        else
-        {
-            //System.out.println(" --> Successfully loaded SPI communication");
-        }
+            throw new IllegalStateException("SPI communication setup error");
         Gpio.pinMode(rstPinNUmber, Gpio.OUTPUT);
         Gpio.digitalWrite(rstPinNUmber, Gpio.HIGH);
         reset();
@@ -212,7 +231,28 @@ public class RaspRC522
     {
         clearBitMask(TxControlReg,(byte) 0x03);
     }
+    
+    private void calculateCRC(byte[] data)
+    {
+        int i,n;
+        clearBitMask(DivIrqReg, (byte)0x04);
+        setBitMask(FIFOLevelReg, (byte)0x80);
 
+        for(i = 0;i<data.length-2;i++)
+            writeRC522(FIFODataReg, data[i]);
+        writeRC522(CommandReg, PCD_CALCCRC);
+        i = 255;
+        while(true)
+        {
+            n = readRC522(DivIrqReg);
+            i--;
+            if ((i == 0) || ((n & 0x04)>0))
+                break;
+        }
+        data[data.length-2] = readRC522(CRCResultRegL);
+        data[data.length-1] = readRC522(CRCResultRegM);
+    }
+    
     private int writeCard(byte command,byte [] data, int dataLen,
 	                  byte[] back_data, int[] back_bits, int[] backLen)
     {
@@ -286,8 +326,28 @@ public class RaspRC522
         }
         return  status;
     }
-
-    public int request(byte req_mode, int[] back_bits)
+    
+    //Convert sector  to blockaddress
+    //sector-0~15
+    //block-0~3
+    //return blockaddress
+    private byte sector2BlockAddress(byte sector, byte block)
+    {
+        if (sector <0 || sector >15 || block <0 || block >3)
+        return (byte)(-1);
+        return (byte)(sector*4+block);
+    }
+    
+    
+    
+    /**
+     * Setup up transceive operation mode.
+     *
+     * @param req_mode a PICC_ mode request
+     * @param back_bits out, on return backbits[0] is number of bits in fifo.
+     * @return MI_OK of successful, else a MI_ error code.
+     */
+    public int setupTranscieve(byte req_mode, int[] back_bits)
     {
         int status;
         byte tagType[] = new byte[1];
@@ -309,8 +369,13 @@ public class RaspRC522
         return status;
     }
 
-    //Anti-collision detection.
-    //Returns tuple of (error state, tag ID).
+    /**
+     * Check if there is a valid tag to communicate with out there.
+     * 
+     * @param back_data On successful return, contains the located tag id
+     *     as five bytes.
+     * @return MI_OK if successful, else an MI_ error code.
+     */
     public int antiColl(byte[] back_data)
     {
         int status;
@@ -346,27 +411,13 @@ public class RaspRC522
         return status;
     }
 
-    private void calculateCRC(byte[] data)
-    {
-        int i,n;
-        clearBitMask(DivIrqReg, (byte)0x04);
-        setBitMask(FIFOLevelReg, (byte)0x80);
+ 
 
-        for(i = 0;i<data.length-2;i++)
-            writeRC522(FIFODataReg, data[i]);
-        writeRC522(CommandReg, PCD_CALCCRC);
-        i = 255;
-        while(true)
-        {
-            n = readRC522(DivIrqReg);
-            i--;
-            if ((i == 0) || ((n & 0x04)>0))
-                break;
-        }
-        data[data.length-2] = readRC522(CRCResultRegL);
-        data[data.length-1] = readRC522(CRCResultRegM);
-    }
-
+    /**
+     * Select a uid for further unlock/lock operations
+     * @param uid UID to select, five bytes.
+     * @return  Read data from analog fifo if available, else 0.
+     */
     public int selectTag(byte[] uid)
     {
         int status;
@@ -383,16 +434,23 @@ public class RaspRC522
         calculateCRC(data);
 
         status = writeCard(PCD_TRANSCEIVE, data, 9,
-		           back_data, back_bits, backLen);
+		                   back_data, back_bits, backLen);
         if (status == MI_OK && back_bits[0] == 0x18)
 	    return back_data[0];
         else return 0;
     }
-    //Authenticates to use specified block address. Tag must be selected using select_tag(uid) before auth.
-    //auth_mode-RFID.auth_a or RFID.auth_b
-    //block_address- used to authenticate
-    //key-list or tuplewith six bytes key
-    //uid-list or tuple with four bytes tag ID
+    
+    
+    /**
+     * Authenticates to use specified block address. Tag must be selected 
+     * using select_tag(uid) before auth.
+     * 
+     * @param auth_mode RFID.auth_a or RFID.auth_b
+     * @param block_address the block to unlock
+     * @param key  six bytes key.
+     * @param uid uid (4 bytes) for user to connect to.
+     * @return MI_OK if successful, else an MI_ error code.
+     */
     public int
     authCard(byte auth_mode, byte block_address, byte[] key,byte[] uid)
     {
@@ -411,27 +469,41 @@ public class RaspRC522
             data[j] = uid[i];
 
         status = writeCard(PCD_AUTHENT, data,12,back_data,back_bits,backLen);
-        if ((readRC522(Status2Reg) & 0x08) == 0) status = MI_ERR;
+        if ((readRC522(Status2Reg) & 0x08) == 0) 
+            status = MI_ERR;
         return status;
     }
 
-    //
+    /**
+     * Authenticates to use specified block address. Tag must be selected 
+     * using select_tag(uid) before auth.
+     * 
+     * @param auth_mode
+     * @param sector
+     * @param auth_mode RFID.auth_a or RFID.auth_b
+     * @param block_address the block to unlock
+     * @param key  six bytes key.
+     * @param uid uid (4 bytes) for user to connect to.
+     * @return MI_OK if successful, else an MI_ error code.
+     */
     public int
     authCard(byte auth_mode, byte sector, byte block, byte[] key, byte[] uid)
     {
         return authCard(auth_mode,sector2BlockAddress(sector,block),key,uid);
     }
 
-    //Ends operations with Crypto1 usage.
+    /** End operation initiated by authCard(). */
     public void stopCrypto()
     {
         clearBitMask(Status2Reg, (byte) 0x08);
     }
 
-    //Reads data from block. You should be authenticated before calling read.
-    //Returns tuple of (result state, read data).
-    //block_address
-    //back_data-data to be read,16 bytes
+    /**
+     * Reads data from block. You should be authenticated before calling read.
+     * @param block_address block numer to read from
+     * @param back_data on successful return, holds data.
+     * @return MI_OK if successful, else an MI_ error code. 
+     */
     public int read(byte block_address, byte[] back_data)
     {
         int status;
@@ -445,17 +517,29 @@ public class RaspRC522
         calculateCRC(data);
         status = writeCard(PCD_TRANSCEIVE, data, data.length,
 	                   back_data, back_bits, backLen);
-        if (backLen[0] == 16) status = MI_OK;
+        if (backLen[0] == 16) 
+            status = MI_OK;
         return status;
     }
 
-    //
+    /**
+     * Reads data from block. You should be authenticated before calling read.
+     * @param block_address block numer to read from
+     * @param sector TBD
+     * @param back_data On successful return, holds data.
+     * @return MI_OK if successful, else an MI_ error code. 
+     */
     public int read(byte sector, byte block, byte[] back_data)
     {
         return read(sector2BlockAddress(sector,block),back_data);
     }
 
-    //Writes data to block. You should be authenticated before calling write.
+    /**
+     * Write data to block. You should be authenticated before calling write.
+     * @param block_address block to read
+     * @param data On successful return, read data.
+     * @return MI_OK if successful, else an MI_ error code. 
+     */
     //Returns error state.
     //data-16 bytes
     public int write(byte block_address, byte[] data)
@@ -477,9 +561,9 @@ public class RaspRC522
         //System.out.println("back_bits[0]="+back_bits[0]+",(back_data[0] & 0x0F)="+(back_data[0] & 0x0F));
         if (status != MI_OK || back_bits[0] !=4
 	    || (back_data[0] & 0x0F) != 0x0A)
-	{
-	    status = MI_ERR;
-	}
+    	{
+    	    status = MI_ERR;
+    	}
         if (status == MI_OK)
         {
             for (i = 0;i<data.length;i++)
@@ -490,15 +574,22 @@ public class RaspRC522
             //System.out.println("write_card data status="+status);
             //System.out.println("back_bits[0]="+back_bits[0]+",(back_data[0] & 0x0F)="+(back_data[0] & 0x0F));
             if (status != MI_OK ||back_bits[0] !=4
-		|| (back_data[0] & 0x0F) != 0x0A)
-	    {
-	       	status = MI_ERR;
-	    }
+            	|| (back_data[0] & 0x0F) != 0x0A)
+            {
+            	       	status = MI_ERR;
+            }
         }
         return  status;
     }
 
-    //
+    /**
+     * Reads data from block. You should be authenticated before calling read.
+     * 
+     * @param block_address block numer to read from
+     * @param sector TBD
+     * @param data On successful return, holds data read.
+     * @return MI_OK if successful, else an MI_ error code. 
+     */
     public int write(byte sector, byte block, byte[] data)
     {
         return write(sector2BlockAddress(sector,block), data);
@@ -524,16 +615,7 @@ public class RaspRC522
         return data;
     }
 
-    //Convert sector  to blockaddress
-    //sector-0~15
-    //block-0~3
-    //return blockaddress
-    private byte sector2BlockAddress(byte sector, byte block)
-    {
-        if (sector <0 || sector >15 || block <0 || block >3)
-	    return (byte)(-1);
-        return (byte)(sector*4+block);
-    }
+ 
 
     //uid-5 bytes
     public int selectMirareOne(byte[] uid)
@@ -542,7 +624,7 @@ public class RaspRC522
         byte tagid[] = new byte[5];
         int status;
 
-        status = request(RaspRC522.PICC_REQIDL, back_bits);
+        status = setupTranscieve(RaspRC522.PICC_REQIDL, back_bits);
         if (status != MI_OK)
 	    return status;
         status = antiColl(tagid);
