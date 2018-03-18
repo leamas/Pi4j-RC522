@@ -8,13 +8,17 @@ import com.pi4j.wiringpi.Spi;
  *
  *  Copyright (c) Liang Yuen, 2016
  *  Copyright (c) Alec Leamas, 2018
+ *  
+ *  @see https://www.elecrow.com/download/MFRC522%20Datasheet.pdf
+ *  @see https://github.com/ondryaso/pi-rc522
+ *  
  */
 
 public class RaspRC522
 {
-    private int NRSTPD = 22;        //RST Pin number,default 22
-    private int Speed = 500000;
-    private int SPI_Channel = 0;
+    private int rstPinNUmber = 22;        //RST Pin number,default 22
+    private int speed = 500000;
+    private int spiChannel = 0;
 
     private final int MAX_LEN = 16;
 
@@ -113,28 +117,26 @@ public class RaspRC522
     public static final byte Reserved34        = 0x3F;
 
 
-    public RaspRC522(int Speed, int PinReset)
-    {
-        this.NRSTPD=PinReset;
-        if (Speed < 500000 || Speed > 32000000)
-        {
-            System.out.println("Speed out of range");
-            return;
-        }
-        else this.Speed=Speed;
-        RC522_Init();
-    }
-
+    
     public RaspRC522()
     {
-        this.Speed=500000;
-        RC522_Init();
+        this(50000, -1);
     }
 
-    public void RC522_Init()
+    public RaspRC522(int speed)
     {
+        this(speed, -1);
+    }
+
+    public RaspRC522(int speed, int pinReset)
+    {
+        if (pinReset != -1)
+            this.rstPinNUmber = pinReset;
+        if (speed < 500000 || speed > 32000000)
+            throw new IllegalArgumentException("Speed out of range"); 
+        this.speed = speed;
         Gpio.wiringPiSetup();           //Enable wiringPi pin schema
-        int fd=Spi.wiringPiSPISetup(SPI_Channel,Speed);
+        int fd=Spi.wiringPiSPISetup(spiChannel,speed);
         if (fd <= -1)
         {
             System.out.println(" --> Failed to set up  SPI communication");
@@ -145,9 +147,8 @@ public class RaspRC522
         {
             //System.out.println(" --> Successfully loaded SPI communication");
         }
-
-        Gpio.pinMode(NRSTPD, Gpio.OUTPUT);
-        Gpio.digitalWrite(NRSTPD, Gpio.HIGH);
+        Gpio.pinMode(rstPinNUmber, Gpio.OUTPUT);
+        Gpio.digitalWrite(rstPinNUmber, Gpio.HIGH);
         reset();
         writeRC522(TModeReg, (byte)0x8D);
         writeRC522(TPrescalerReg, (byte)0x3E);
@@ -168,7 +169,7 @@ public class RaspRC522
         byte data[] = new byte[2];
         data[0] = (byte) ((address << 1) & 0x7E);
         data[1] = value;
-        int result = Spi.wiringPiSPIDataRW(SPI_Channel, data);
+        int result = Spi.wiringPiSPIDataRW(spiChannel, data);
         if (result == -1)
 	{
             System.out.println(
@@ -182,7 +183,7 @@ public class RaspRC522
         byte data[] = new byte[2];
         data[0] = (byte) (((address << 1) & 0x7E) | 0x80);
         data[1] = 0;
-        int result = Spi.wiringPiSPIDataRW(SPI_Channel, data);
+        int result = Spi.wiringPiSPIDataRW(spiChannel, data);
         if (result == -1)
             System.out.println("Device read  error,address="+address);
         return data[1];
