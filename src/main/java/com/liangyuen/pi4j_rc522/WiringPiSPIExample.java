@@ -6,8 +6,6 @@ package com.liangyuen.pi4j_rc522;
  *  Copyright (c) Alec Leamas, 2018
  */
 
-import com.liangyuen.util.RaspRC522;
-import com.liangyuen.util.Convert;
 
 public class WiringPiSPIExample {
 	public static void main(String args[]) throws InterruptedException {

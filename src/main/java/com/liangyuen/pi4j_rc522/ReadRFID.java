@@ -6,12 +6,9 @@ package com.liangyuen.pi4j_rc522;
  *  Copyright (c) Liang Yuen, 2016
  *  Copyright (c) Alec Leamas, 2018
  */
-import com.liangyuen.util.Convert;
-import com.liangyuen.util.*;
 import com.pi4j.io.gpio.RaspiPin;
 import com.pi4j.wiringpi.Gpio;
 import com.pi4j.wiringpi.Spi;
-import com.liangyuen.util.FMRC522;
 
 public class ReadRFID {
 

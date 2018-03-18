@@ -18,27 +18,27 @@ public class RaspRC522
 
     private final int MAX_LEN = 16;
 
-    public static final byte PCD_IDLE          = 0x00;
-    public static final byte PCD_AUTHENT       = 0x0E;
-    public static final byte PCD_RECEIVE       = 0x08;
-    public static final byte PCD_TRANSMIT      = 0x04;
-    public static final byte PCD_TRANSCEIVE    = 0x0C;
-    public static final byte PCD_RESETPHASE    = 0x0F;
-    public static final byte PCD_CALCCRC       = 0x03;
+    public static final byte PCD_IDLE          = (byte) 0x00;
+    public static final byte PCD_AUTHENT       = (byte) 0x0E;
+    public static final byte PCD_RECEIVE       = (byte) 0x08;
+    public static final byte PCD_TRANSMIT      = (byte) 0x04;
+    public static final byte PCD_TRANSCEIVE    = (byte) 0x0C;
+    public static final byte PCD_RESETPHASE    = (byte) 0x0F;
+    public static final byte PCD_CALCCRC       = (byte) 0x03;
 
-    public  static final byte PICC_REQIDL      = 0x26;
-    public  static final byte PICC_REQALL      = 0x52;
-    public  static final byte PICC_ANTICOLL    = 0x93;
-    public  static final byte PICC_SElECTTAG   = 0x93;
-    public  static final byte PICC_AUTHENT1A   = 0x60;
-    public  static final byte PICC_AUTHENT1B   = 0x61;
-    public  static final byte PICC_READ        = 0x30;
-    public  static final byte PICC_WRITE       = 0xA0;
-    public  static final byte PICC_DECREMENT   = 0xC0;
-    public  static final byte PICC_INCREMENT   = 0xC1;
-    public  static final byte PICC_RESTORE     = 0xC2;
-    public  static final byte PICC_TRANSFER    = 0xB0;
-    public  static final byte PICC_HALT        = 0x50;
+    public  static final byte PICC_REQIDL      = (byte) 0x26;
+    public  static final byte PICC_REQALL      = (byte) 0x52;
+    public  static final byte PICC_ANTICOLL    = (byte) 0x93;
+    public  static final byte PICC_SElECTTAG   = (byte) 0x93;
+    public  static final byte PICC_AUTHENT1A   = (byte) 0x60;
+    public  static final byte PICC_AUTHENT1B   = (byte) 0x61;
+    public  static final byte PICC_READ        = (byte) 0x30;
+    public  static final byte PICC_WRITE       = (byte) 0xA0;
+    public  static final byte PICC_DECREMENT   = (byte) 0xC0;
+    public  static final byte PICC_INCREMENT   = (byte) 0xC1;
+    public  static final byte PICC_RESTORE     = (byte) 0xC2;
+    public  static final byte PICC_TRANSFER    = (byte) 0xB0;
+    public  static final byte PICC_HALT        = (byte) 0x50;
 
     public static final int MI_OK              = 0;
     public static final int MI_NOTAGERR        = 1;
