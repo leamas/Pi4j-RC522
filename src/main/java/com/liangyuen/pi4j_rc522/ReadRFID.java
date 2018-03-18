@@ -17,23 +17,23 @@ public class ReadRFID {
 		int back_bits[] = new int[1];
 		String strUID;
 		byte tagid[] = new byte[5];
-		int i, status;
-		byte blockaddress = 8; // 读写块地址0-63
+//		int i;
+		int status;
+//		byte blockaddress = 8; 
 		byte sector = 15, block = 2;
 
-		// if (rc522.Request(RaspRC522.PICC_REQIDL, back_bits) == rc522.MI_OK)
-		// System.out.println("Detected:"+back_bits[0]);
-		// if (rc522.AntiColl(tagid) != RaspRC522.MI_OK)
-		// {
-		// System.out.println("anticoll error");
-		// return;
-		// }
-		//
-		// //Select the scanned tag，选中指定序列号的卡
-		// int size=rc522.Select_Tag(tagid);
-		// System.out.println("Size="+size);
+		if (rc522.request(RaspRC522.PICC_REQIDL, back_bits) == RaspRC522.MI_OK)
+	    System.out.println("Detected:"+back_bits[0]);
+		if (rc522.antiColl(tagid) != RaspRC522.MI_OK)
+		{
+	        System.out.println("anticoll error");
+		    return;
+		}
+		
+	    int size=rc522.selectTag(tagid);
+		System.out.println("Size="+size);
 
-		rc522.selectMirareOne(tagid);
+//		rc522.selectMirareOne(tagid);
 		strUID = Convert.bytesToHex(tagid);
 		// System.out.println(strUID);
 		// System.out.println("Card Read UID:" + tagid[0] + "," + tagid[1] + "," +
@@ -42,8 +42,12 @@ public class ReadRFID {
 				+ strUID.substring(4, 6) + "," + strUID.substring(6, 8));
 
 		// default key
-		byte[] keyA = new byte[] { (byte) 0x03, (byte) 0x03, (byte) 0x00, (byte) 0x01, (byte) 0x02, (byte) 0x03 };
-		byte[] keyB = new byte[] { (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF };
+		byte[] keyA = new byte[] { 
+			(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF 
+		};
+		byte[] keyB = new byte[] { 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF 
+		};
 
 		// Authenticate
 		byte data[] = new byte[16];
@@ -57,23 +61,23 @@ public class ReadRFID {
 		System.out.println("Successfully authenticated,Read data=" + Convert.bytesToHex(data));
 		status = rc522.read(sector, (byte) 3, data);
 		System.out.println("Read control block data=" + Convert.bytesToHex(data));
-
-		for (i = 0; i < 16; i++) {
-			data[i] = (byte) 0x00;
-		}
-		// Authenticate
-		status = rc522.authCard(RaspRC522.PICC_AUTHENT1B, sector, block, keyB, tagid);
-		if (status != RaspRC522.MI_OK) {
-			System.out.println("Authenticate B error");
-			return;
-		}
-		status = rc522.write(sector, block, data);
-		if (status == RaspRC522.MI_OK)
-			System.out.println("Write data finished");
-		else {
-			System.out.println("Write data error,status=" + status);
-			return;
-		}
+//
+//		for (i = 0; i < 16; i++) {
+//			data[i] = (byte) 0x00;
+//		}
+//		// Authenticate
+//		status = rc522.authCard(RaspRC522.PICC_AUTHENT1B, sector, block, keyB, tagid);
+//		if (status != RaspRC522.MI_OK) {
+//			System.out.println("Authenticate B error");
+//			return;
+//		}
+//		status = rc522.write(sector, block, data);
+//		if (status == RaspRC522.MI_OK)
+//			System.out.println("Write data finished");
+//		else {
+//			System.out.println("Write data error,status=" + status);
+//			return;
+//		}
 		// byte buff[]=new byte[16];
 		//
 		// for (i = 0; i < 16; i++)
