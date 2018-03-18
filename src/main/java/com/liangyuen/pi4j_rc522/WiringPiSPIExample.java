@@ -22,7 +22,7 @@ public class WiringPiSPIExample {
 			System.out.println("anticoll error");
 			return;
 		}
-		strUID = Convert.bytesToHex(tagid);
+		strUID = new ByteArray(tagid).toString(",");
 		// System.out.println(strUID);
 		// System.out.println("Card Read UID:" + tagid[0] + "," + tagid[1] + "," +
 		// tagid[2] + "," + tagid[3]);
