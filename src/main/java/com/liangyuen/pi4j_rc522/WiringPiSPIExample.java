@@ -16,9 +16,9 @@ public class WiringPiSPIExample {
 		String strUID;
 		byte sector = 15, block = 3;
 
-		if (rc522.Request(RaspRC522.PICC_REQIDL, back_len) == rc522.MI_OK)
+		if (rc522.request(RaspRC522.PICC_REQIDL, back_len) == rc522.MI_OK)
 			System.out.println("Detecte card:" + back_len[0]);
-		if (rc522.AntiColl(tagid) != RaspRC522.MI_OK) {
+		if (rc522.antiColl(tagid) != RaspRC522.MI_OK) {
 			System.out.println("anticoll error");
 			return;
 		}
@@ -31,12 +31,12 @@ public class WiringPiSPIExample {
 
 		byte[] defaultkey = new byte[] { (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF };
 		// Select the scanned tag，选中指定序列号的卡
-		int size = rc522.Select_Tag(tagid);
+		int size = rc522.selectTag(tagid);
 		System.out.println("Size=" + size);
 
 		// Authenticate
 
-		status = rc522.Auth_Card(RaspRC522.PICC_AUTHENT1A, sector, block, defaultkey, tagid);
+		status = rc522.authCard(RaspRC522.PICC_AUTHENT1A, sector, block, defaultkey, tagid);
 		if (status != RaspRC522.MI_OK) {
 			System.out.println("Authenticate error");
 			return;
@@ -48,7 +48,7 @@ public class WiringPiSPIExample {
 		byte[] keyB = new byte[] { (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF };
 		System.arraycopy(keyA, 0, data, 0, 6);
 		System.arraycopy(keyB, 0, data, 10, 6);
-		status = rc522.Write(sector, block, data);
+		status = rc522.write(sector, block, data);
 		if (status == RaspRC522.MI_OK) {
 			System.out.println("Write data finished");
 		} else {
