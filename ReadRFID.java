@@ -2,6 +2,9 @@ package com.liangyuen.idea.raspberryRFID;
 
 /**
  * Created by Liang on 2016/3/7.
+ * 
+ *  Copyright (c) Liang Yuen, 2016
+ *  Copyright (c) Alec Leamas, 2018
  */
 import com.liangyuen.util.Convert;
 import com.liangyuen.util.*;

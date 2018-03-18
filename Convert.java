@@ -1,5 +1,10 @@
 package com.liangyuen.util;
 
+/*
+ *  Copyright (c) Liang Yuen, 2016
+ *  Copyright (c) Alec Leamas, 2018
+ */
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Date;

@@ -1,7 +1,9 @@
 package com.liangyuen.idea.raspberryRFID;
 
 /**
- * Created by Liang on 2016/3/13.
+ *  Created by Liang on 2016/3/13.
+ *  Copyright (c) Liang Yuen, 2016
+ *  Copyright (c) Alec Leamas, 2018
  */
 
 
