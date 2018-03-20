@@ -153,7 +153,8 @@ public class RaspRC522 {
         data[1] = value;
         int result = Spi.wiringPiSPIDataRW(SPI_Channel, data);
         if (result == -1)
-            System.out.println("Device write  error,address=" + address + ",value=" + value);
+            System.out.println("Device write  error,address="
+                               + address + ",value=" + value);
     }
 
     private byte Read_RC522(byte address) {
@@ -186,7 +187,8 @@ public class RaspRC522 {
         ClearBitMask(TxControlReg, (byte) 0x03);
     }
 
-    private int Write_Card(byte command, byte[] data, int dataLen, byte[] back_data, int[] back_bits, int[] backLen) {
+    private int Write_Card(byte command, byte[] data, int dataLen,
+                           byte[] back_data, int[] back_bits, int[] backLen) {
         int status = MI_ERR;
         byte irq = 0, irq_wait = 0, lastBits = 0;
         int n = 0, i = 0;
@@ -261,7 +263,8 @@ public class RaspRC522 {
 
         tagType[0] = req_mode;
         back_bits[0] = 0;
-        status = Write_Card(PCD_TRANSCEIVE, tagType, 1, data_back, back_bits, backLen);
+        status = Write_Card(PCD_TRANSCEIVE, tagType, 1,
+                            data_back, back_bits, backLen);
         if (status != MI_OK || back_bits[0] != 0x10) {
             // System.out.println("status="+status+",back_bits[0]="+back_bits[0]);
             status = MI_ERR;
@@ -283,7 +286,8 @@ public class RaspRC522 {
         Write_RC522(BitFramingReg, (byte) 0x00);
         serial_number[0] = PICC_ANTICOLL;
         serial_number[1] = 0x20;
-        status = Write_Card(PCD_TRANSCEIVE, serial_number, 2, back_data, back_bits, backLen);
+        status = Write_Card(PCD_TRANSCEIVE, serial_number, 2,
+                            back_data, back_bits, backLen);
         if (status == MI_OK) {
             if (backLen[0] == 5) {
                 for (i = 0; i < 4; i++)
@@ -333,7 +337,8 @@ public class RaspRC522 {
             data[j] = uid[i];
         Calculate_CRC(data);
 
-        status = Write_Card(PCD_TRANSCEIVE, data, 9, back_data, back_bits, backLen);
+        status = Write_Card(PCD_TRANSCEIVE, data, 9,
+                            back_data, back_bits, backLen);
         if (status == MI_OK && back_bits[0] == 0x18)
             return back_data[0];
         else
@@ -347,7 +352,8 @@ public class RaspRC522 {
     // block_address- used to authenticate
     // key-list or tuple with six bytes key
     // uid-list or tuple with four bytes tag ID
-    public int Auth_Card(byte auth_mode, byte block_address, byte[] key, byte[] uid) {
+    public int Auth_Card(byte auth_mode, byte block_address,
+                         byte[] key, byte[] uid) {
         int status;
         byte data[] = new byte[12];
         byte back_data[] = new byte[this.MAX_LEN];
@@ -362,15 +368,19 @@ public class RaspRC522 {
         for (i = 0, j = 8; i < 4; i++, j++)
             data[j] = uid[i];
 
-        status = Write_Card(PCD_AUTHENT, data, 12, back_data, back_bits, backLen);
+        status = Write_Card(PCD_AUTHENT, data, 12,
+		            back_data, back_bits, backLen);
         if ((Read_RC522(Status2Reg) & 0x08) == 0)
             status = MI_ERR;
         return status;
     }
 
     //
-    public int Auth_Card(byte auth_mode, byte sector, byte block, byte[] key, byte[] uid) {
-        return Auth_Card(auth_mode, Sector2BlockAddress(sector, block), key, uid);
+    public int Auth_Card(byte auth_mode, byte sector, byte block,
+                         byte[] key, byte[] uid)
+    {
+        return
+            Auth_Card(auth_mode, Sector2BlockAddress(sector, block), key, uid);
     }
 
     // Ends operations with Crypto1 usage.
@@ -392,7 +402,8 @@ public class RaspRC522 {
         data[0] = PICC_READ;
         data[1] = block_address;
         Calculate_CRC(data);
-        status = Write_Card(PCD_TRANSCEIVE, data, data.length, back_data, back_bits, backLen);
+        status = Write_Card(PCD_TRANSCEIVE, data, data.length,
+                            back_data, back_bits, backLen);
         if (backLen[0] == 16)
             status = MI_OK;
         return status;
@@ -418,24 +429,31 @@ public class RaspRC522 {
         buff[0] = PICC_WRITE;
         buff[1] = block_address;
         Calculate_CRC(buff);
-        status = Write_Card(PCD_TRANSCEIVE, buff, buff.length, back_data, back_bits, backLen);
+        status = Write_Card(PCD_TRANSCEIVE, buff, buff.length,
+                            back_data, back_bits, backLen);
         // System.out.println("write_card status="+status);
         // System.out.println("back_bits[0]="+back_bits[0]+",(back_data[0] &
         // 0x0F)="+(back_data[0] &
         // 0x0F));
-        if (status != MI_OK || back_bits[0] != 4 || (back_data[0] & 0x0F) != 0x0A)
+        if (status != MI_OK || back_bits[0] != 4
+            || (back_data[0] & 0x0F) != 0x0A) {
             status = MI_ERR;
+        }
         if (status == MI_OK) {
             for (i = 0; i < data.length; i++)
                 buff_write[i] = data[i];
             Calculate_CRC(buff_write);
-            status = Write_Card(PCD_TRANSCEIVE, buff_write, buff_write.length, back_data, back_bits, backLen);
+            status = Write_Card(PCD_TRANSCEIVE,
+		                buff_write, buff_write.length,
+				back_data, back_bits, backLen);
             // System.out.println("write_card data status="+status);
             // System.out.println("back_bits[0]="+back_bits[0]+",(back_data[0] &
             // 0x0F)="+(back_data[0] &
             // 0x0F));
-            if (status != MI_OK || back_bits[0] != 4 || (back_data[0] & 0x0F) != 0x0A)
-                status = MI_ERR;
+            if (status != MI_OK || back_bits[0] != 4
+                || (back_data[0] & 0x0F) != 0x0A) {
+                    status = MI_ERR;
+            }
         }
         return status;
     }
