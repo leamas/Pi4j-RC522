@@ -33,105 +33,104 @@ import com.pi4j.wiringpi.Spi;
  */
 
 public class RaspRC522 {
-    public static final byte PCD_IDLE = 0x00;
-    public static final byte PCD_AUTHENT = 0x0E;
-    public static final byte PCD_RECEIVE = 0x08;
-    public static final byte PCD_TRANSMIT = 0x04;
-    public static final byte PCD_TRANSCEIVE = 0x0C;
-    public static final byte PCD_RESETPHASE = 0x0F;
-    public static final byte PCD_CALCCRC = 0x03;
+    public static final byte    PCD_IDLE            = 0x00;
+    public static final byte    PCD_AUTHENT         = 0x0E;
+    public static final byte    PCD_RECEIVE         = 0x08;
+    public static final byte    PCD_TRANSMIT        = 0x04;
+    public static final byte    PCD_TRANSCEIVE      = 0x0C;
+    public static final byte    PCD_RESETPHASE      = 0x0F;
+    public static final byte    PCD_CALCCRC         = 0x03;
 
-    public static final byte PICC_REQIDL = 0x26;
-    public static final byte PICC_REQALL = 0x52;
-    public static final byte PICC_ANTICOLL = (byte) 0x93;
-    public static final byte PICC_SElECTTAG = (byte) 0x93;
-    public static final byte PICC_AUTHENT1A = 0x60;
-    public static final byte PICC_AUTHENT1B = 0x61;
-    public static final byte PICC_READ = 0x30;
-    public static final byte PICC_WRITE = (byte) 0xA0;
-    public static final byte PICC_DECREMENT = (byte) 0xC0;
-    public static final byte PICC_INCREMENT = (byte) 0xC1;
-    public static final byte PICC_RESTORE = (byte) 0xC2;
-    public static final byte PICC_TRANSFER = (byte) 0xB0;
-    public static final byte PICC_HALT = 0x50;
+    public static final byte    PICC_REQIDL         = 0x26;
+    public static final byte    PICC_REQALL         = 0x52;
+    public static final byte    PICC_ANTICOLL       = (byte) 0x93;
+    public static final byte    PICC_SElECTTAG      = (byte) 0x93;
+    public static final byte    PICC_AUTHENT1A      = 0x60;
+    public static final byte    PICC_AUTHENT1B      = 0x61;
+    public static final byte    PICC_READ           = 0x30;
+    public static final byte    PICC_WRITE          = (byte) 0xA0;
+    public static final byte    PICC_DECREMENT      = (byte) 0xC0;
+    public static final byte    PICC_INCREMENT      = (byte) 0xC1;
+    public static final byte    PICC_RESTORE        = (byte) 0xC2;
+    public static final byte    PICC_TRANSFER       = (byte) 0xB0;
+    public static final byte    PICC_HALT           = 0x50;
 
-    public static final int MI_OK = 0;
-    public static final int MI_NOTAGERR = 1;
-    public static final int MI_ERR = 2;
+    public static final int     MI_OK               = 0;
+    public static final int     MI_NOTAGERR         = 1;
+    public static final int     MI_ERR              = 2;
 
-    public static final byte Reserved00 = 0x00;
-    public static final byte CommandReg = 0x01;
-    public static final byte CommIEnReg = 0x02;
-    public static final byte DivlEnReg = 0x03;
-    public static final byte CommIrqReg = 0x04;
-    public static final byte DivIrqReg = 0x05;
-    public static final byte ErrorReg = 0x06;
-    public static final byte Status1Reg = 0x07;
-    public static final byte Status2Reg = 0x08;
-    public static final byte FIFODataReg = 0x09;
-    public static final byte FIFOLevelReg = 0x0A;
-    public static final byte WaterLevelReg = 0x0B;
-    public static final byte ControlReg = 0x0C;
-    public static final byte BitFramingReg = 0x0D;
-    public static final byte CollReg = 0x0E;
-    public static final byte Reserved01 = 0x0F;
+    public static final byte    Reserved00          = 0x00;
+    public static final byte    CommandReg          = 0x01;
+    public static final byte    CommIEnReg          = 0x02;
+    public static final byte    DivlEnReg           = 0x03;
+    public static final byte    CommIrqReg          = 0x04;
+    public static final byte    DivIrqReg           = 0x05;
+    public static final byte    ErrorReg            = 0x06;
+    public static final byte    Status1Reg          = 0x07;
+    public static final byte    Status2Reg          = 0x08;
+    public static final byte    FIFODataReg         = 0x09;
+    public static final byte    FIFOLevelReg        = 0x0A;
+    public static final byte    WaterLevelReg       = 0x0B;
+    public static final byte    ControlReg          = 0x0C;
+    public static final byte    BitFramingReg       = 0x0D;
+    public static final byte    CollReg             = 0x0E;
+    public static final byte    Reserved01          = 0x0F;
 
-    public static final byte Reserved10 = 0x10;
-    public static final byte ModeReg = 0x11;
-    public static final byte TxModeReg = 0x12;
-    public static final byte RxModeReg = 0x13;
-    public static final byte TxControlReg = 0x14;
-    public static final byte TxAutoReg = 0x15;
-    public static final byte TxSelReg = 0x16;
-    public static final byte RxSelReg = 0x17;
-    public static final byte RxThresholdReg = 0x18;
-    public static final byte DemodReg = 0x19;
-    public static final byte Reserved11 = 0x1A;
-    public static final byte Reserved12 = 0x1B;
-    public static final byte MifareReg = 0x1C;
-    public static final byte Reserved13 = 0x1D;
-    public static final byte Reserved14 = 0x1E;
-    public static final byte SerialSpeedReg = 0x1F;
+    public static final byte    Reserved10          = 0x10;
+    public static final byte    ModeReg             = 0x11;
+    public static final byte    TxModeReg           = 0x12;
+    public static final byte    RxModeReg           = 0x13;
+    public static final byte    TxControlReg        = 0x14;
+    public static final byte    TxAutoReg           = 0x15;
+    public static final byte    TxSelReg            = 0x16;
+    public static final byte    RxSelReg            = 0x17;
+    public static final byte    RxThresholdReg      = 0x18;
+    public static final byte    DemodReg            = 0x19;
+    public static final byte    Reserved11          = 0x1A;
+    public static final byte    Reserved12          = 0x1B;
+    public static final byte    MifareReg           = 0x1C;
+    public static final byte    Reserved13          = 0x1D;
+    public static final byte    Reserved14          = 0x1E;
+    public static final byte    SerialSpeedReg      = 0x1F;
 
-    public static final byte Reserved20 = 0x20;
-    public static final byte CRCResultRegM = 0x21;
-    public static final byte CRCResultRegL = 0x22;
-    public static final byte Reserved21 = 0x23;
-    public static final byte ModWidthReg = 0x24;
-    public static final byte Reserved22 = 0x25;
-    public static final byte RFCfgReg = 0x26;
-    public static final byte GsNReg = 0x27;
-    public static final byte CWGsPReg = 0x28;
-    public static final byte ModGsPReg = 0x29;
-    public static final byte TModeReg = 0x2A;
-    public static final byte TPrescalerReg = 0x2B;
-    public static final byte TReloadRegH = 0x2C;
-    public static final byte TReloadRegL = 0x2D;
-    public static final byte TCounterValueRegH = 0x2E;
-    public static final byte TCounterValueRegL = 0x2F;
+    public static final byte    Reserved20          = 0x20;
+    public static final byte    CRCResultRegM       = 0x21;
+    public static final byte    CRCResultRegL       = 0x22;
+    public static final byte    Reserved21          = 0x23;
+    public static final byte    ModWidthReg         = 0x24;
+    public static final byte    Reserved22          = 0x25;
+    public static final byte    RFCfgReg            = 0x26;
+    public static final byte    GsNReg              = 0x27;
+    public static final byte    CWGsPReg            = 0x28;
+    public static final byte    ModGsPReg           = 0x29;
+    public static final byte    TModeReg            = 0x2A;
+    public static final byte    TPrescalerReg       = 0x2B;
+    public static final byte    TReloadRegH         = 0x2C;
+    public static final byte    TReloadRegL         = 0x2D;
+    public static final byte    TCounterValueRegH   = 0x2E;
+    public static final byte    TCounterValueRegL   = 0x2F;
 
-    public static final byte Reserved30 = 0x30;
-    public static final byte TestSel1Reg = 0x31;
-    public static final byte TestSel2Reg = 0x32;
-    public static final byte TestPinEnReg = 0x33;
-    public static final byte TestPinValueReg = 0x34;
-    public static final byte TestBusReg = 0x35;
-    public static final byte AutoTestReg = 0x36;
-    public static final byte VersionReg = 0x37;
-    public static final byte AnalogTestReg = 0x38;
-    public static final byte TestDAC1Reg = 0x39;
-    public static final byte TestDAC2Reg = 0x3A;
-    public static final byte TestADCReg = 0x3B;
-    public static final byte Reserved31 = 0x3C;
-    public static final byte Reserved32 = 0x3D;
-    public static final byte Reserved33 = 0x3E;
-    public static final byte Reserved34 = 0x3F;
+    public static final byte    Reserved30          = 0x30;
+    public static final byte    TestSel1Reg         = 0x31;
+    public static final byte    TestSel2Reg         = 0x32;
+    public static final byte    TestPinEnReg        = 0x33;
+    public static final byte    TestPinValueReg     = 0x34;
+    public static final byte    TestBusReg          = 0x35;
+    public static final byte    AutoTestReg         = 0x36;
+    public static final byte    VersionReg          = 0x37;
+    public static final byte    AnalogTestReg       = 0x38;
+    public static final byte    TestDAC1Reg         = 0x39;
+    public static final byte    TestDAC2Reg         = 0x3A;
+    public static final byte    TestADCReg          = 0x3B;
+    public static final byte    Reserved31          = 0x3C;
+    public static final byte    Reserved32          = 0x3D;
+    public static final byte    Reserved33          = 0x3E;
+    public static final byte    Reserved34          = 0x3F;
 
-    private int NRSTPD = 22; // RST Pin number,default 22
-    private int Speed = 500000;
-    private int SPI_Channel = 0;
-    private final int MAX_LEN = 16;
-
+    private int                 NRSTPD              = 22; // RST Pin number
+    private int                 Speed               = 500000;
+    private int                 SPI_Channel         = 0;
+    private final int           MAX_LEN             = 16;
 
     public RaspRC522(int Speed, int PinReset) {
         this.NRSTPD = PinReset;
@@ -431,7 +430,7 @@ public class RaspRC522 {
             data[j] = uid[i];
 
         status = Write_Card(PCD_AUTHENT, data, 12,
-		            back_data, back_bits, backLen);
+                            back_data, back_bits, backLen);
         if ((Read_RC522(Status2Reg) & 0x08) == 0)
             status = MI_ERR;
         return status;
@@ -533,8 +532,8 @@ public class RaspRC522 {
                 buff_write[i] = data[i];
             Calculate_CRC(buff_write);
             status = Write_Card(PCD_TRANSCEIVE,
-		                buff_write, buff_write.length,
-				back_data, back_bits, backLen);
+                                buff_write, buff_write.length,
+                                back_data, back_bits, backLen);
             // System.out.println("write_card data status="+status);
             // System.out.println("back_bits[0]="+back_bits[0]+",(back_data[0] &
             // 0x0F)="+(back_data[0] &
