@@ -18,11 +18,10 @@ public class ReadRFID
         String strUID;
         byte tagid[]=new byte[5];
         int i,status;
-        byte blockaddress=8;  //读写块地址0-63
+        byte blockaddress=8;
         byte sector=15,block=2;
 
 
-        //读卡，得到序列号
 //        if(rc522.Request(RaspRC522.PICC_REQIDL, back_bits) == rc522.MI_OK)
 //            System.out.println("Detected:"+back_bits[0]);
 //        if(rc522.AntiColl(tagid) != RaspRC522.MI_OK)
@@ -31,7 +30,7 @@ public class ReadRFID
 //            return;
 //        }
 //
-//        //Select the scanned tag，选中指定序列号的卡
+//        //Select the scanned tag.
 //        int size=rc522.Select_Tag(tagid);
 //        System.out.println("Size="+size);
 
@@ -49,7 +48,6 @@ public class ReadRFID
         byte[] keyB=new byte[]{(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF};
 
 
-        //Authenticate,A密钥验证卡,可以读数据块2
         byte data[]=new byte[16];
         status = rc522.Auth_Card(RaspRC522.PICC_AUTHENT1A, sector,block, keyA, tagid);
         if(status != RaspRC522.MI_OK)
@@ -70,7 +68,7 @@ public class ReadRFID
             data[i]=(byte)0x00;
         }
 
-        //Authenticate,B密钥验证卡,可以写数据块2
+        //Authenticate,B
         status = rc522.Auth_Card(RaspRC522.PICC_AUTHENT1B, sector,block, keyB, tagid);
         if(status != RaspRC522.MI_OK)
         {
