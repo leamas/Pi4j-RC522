@@ -50,7 +50,6 @@
                     <linksource>true</linksource>
                 </configuration>
             </plugin>
->>>>>>> cc43f1f... pomfix
         </plugins>
     </build>
 </project>

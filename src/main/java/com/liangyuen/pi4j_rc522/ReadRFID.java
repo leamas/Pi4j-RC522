@@ -9,83 +9,71 @@ package com.liangyuen.pi4j_rc522;
 import com.pi4j.wiringpi.Spi;
 
 public class ReadRFID {
+    static ByteArray KEY_A = new ByteArray("ff:ff:ff:ff:ff:ff");
+    static ByteArray KEY_B = new ByteArray("ff:ff:ff:ff:ff:ff");
+
     public static void main(String[] args) throws InterruptedException {
         RaspRC522 rc522 = new RaspRC522();
         int back_bits[] = new int[1];
-        String strUID;
+        ByteArray strUID;
         byte tagid[] = new byte[5];
-        int i, status;
-        byte blockaddress = 8;
+//      int i;
+        int status;
+//      byte blockaddress = 8;
         byte sector = 15, block = 2;
+        while (true) {
+            Thread.sleep(2000);
+            if (rc522.setupTranscieve(RaspRC522.PICC_REQIDL, back_bits)
+                == RaspRC522.MI_OK)
+            {
+                System.out.println("Detected:"+back_bits[0]);
+            }
+            if (rc522.antiColl(tagid) != RaspRC522.MI_OK)
+            {
+                System.out.println("anticoll error");
+                continue;
+            }
 
-        // if(rc522.Request(RaspRC522.PICC_REQIDL, back_bits) == rc522.MI_OK)
-        // System.out.println("Detected:"+back_bits[0]);
-        // if(rc522.AntiColl(tagid) != RaspRC522.MI_OK)
-        // {
-        // System.out.println("anticoll error");
-        // return;
-        // }
-        //
-        // //Select the scanned tag.
-        // int size=rc522.Select_Tag(tagid);
-        // System.out.println("Size="+size);
+            int size=rc522.selectTag(tagid);
+            System.out.println("Size="+size);
 
-        rc522.selectMirareOne(tagid);
-        strUID = Convert.bytesToHex(tagid);
-        // System.out.println(strUID);
-        // System.out.println("Card Read UID:" + tagid[0] + "," + tagid[1] + "," +
-        // tagid[2] + "," +
-        // tagid[3]);
-        System.out.println("Card Read UID:" + strUID.substring(0, 2)
-                           + "," + strUID.substring(2, 4) + ","
-                           + strUID.substring(4, 6) + ","
-                           + strUID.substring(6, 8));
+//          rc522.selectMirareOne(tagid);
+            strUID = new ByteArray(tagid);
+            // System.out.println(strUID);
+            System.out.println("New UID: " + strUID.toString(","));
 
-        // default key
-        byte[] keyA = new byte[] {
-            (byte) 0x03, (byte) 0x03, (byte) 0x00, (byte) 0x01,
-            (byte) 0x02, (byte) 0x03
-        };
-        byte[] keyB = new byte[] {
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF
-        };
-        byte data[] = new byte[16];
-        status = rc522.authCard(RaspRC522.PICC_AUTHENT1A,
-                                 sector, block, keyA, tagid);
-        if (status != RaspRC522.MI_OK) {
-            System.out.println("Authenticate A error");
-            return;
-        }
-
-        status = rc522.read(sector, block, data);
-        // rc522.Stop_Crypto();
-        System.out.println("Successfully authenticated,Read data="
-                           + Convert.bytesToHex(data));
-        status = rc522.read(sector, (byte) 3, data);
-        System.out.println("Read control block data="
-                           + Convert.bytesToHex(data));
-
-        for (i = 0; i < 16; i++) {
-            data[i] = (byte) 0x00;
-        }
-
-        // Authenticate,B
-        status = rc522.authCard(RaspRC522.PICC_AUTHENT1B,
-                                 sector, block, keyB, tagid);
-        if (status != RaspRC522.MI_OK) {
-            System.out.println("Authenticate B error");
-            return;
-        }
-
-        status = rc522.write(sector, block, data);
-        if (status == RaspRC522.MI_OK)
-            System.out.println("Write data finished");
-        else {
-            System.out.println("Write data error,status=" + status);
-            return;
-        }
-
+            // Authenticate
+            byte data[] = new byte[16];
+            status = rc522.authCard(RaspRC522.PICC_AUTHENT1A, sector, block,
+                                    KEY_A.toBytes(), tagid);
+            if (status != RaspRC522.MI_OK) {
+                System.out.println("Authenticate A error");
+                continue;
+            }
+            status = rc522.read(sector, block, data);
+            System.out.println("Successfully authenticated,Read data="
+                               + new ByteArray(data).toString());
+            status = rc522.read(sector, (byte) 3, data);
+            System.out.println("Read control block data="
+                               + new ByteArray(data).toString());
+            rc522.stopCrypto();
+//
+//      for (i = 0; i < 16; i++) {
+//          data[i] = (byte) 0x00;
+//      }
+//      // Authenticate
+//      status = rc522.authCard(RaspRC522.PICC_AUTHENT1B, sector, block, keyB, tagid);
+//      if (status != RaspRC522.MI_OK) {
+//          System.out.println("Authenticate B error");
+//          continue;
+//      }
+//      status = rc522.write(sector, block, data);
+//      if (status == RaspRC522.MI_OK)
+//          System.out.println("Write data finished");
+//      else {
+//          System.out.println("Write data error,status=" + status);
+//          continue;
+//      }
         // byte buff[]=new byte[16];
         //
         // for (i = 0; i < 16; i++)
@@ -93,12 +81,12 @@ public class ReadRFID {
         // buff[i]=(byte)0;
         // }
         // status=rc522.Read(sector,block,buff);
-        // if(status == RaspRC522.MI_OK)
+        // if (status == RaspRC522.MI_OK)
         // System.out.println("Read Data finished");
         // else
         // {
         // System.out.println("Read data error,status="+status);
-        // return;
+        // continue;
         // }
         //
         // System.out.print("sector"+sector+",block="+block+" :");
@@ -106,10 +94,10 @@ public class ReadRFID {
         // for (i=0;i<16;i++)
         // {
         // System.out.print(strData.substring(i*2,i*2+2));
-        // if(i < 15) System.out.print(",");
+        // if (i < 15) System.out.print(",");
         // else System.out.println("");
         // }
-
+        }  // while (true)
     }
 
     public static void rfidReaderLoop(int sleeptime) throws InterruptedException {
@@ -153,10 +141,10 @@ public class ReadRFID {
                 Thread.sleep(50);
                 // ResetPin.low();
             }
-
             // Wait 1/2 second before trying to read again
             Thread.sleep(sleeptime);
         }
+
     }
 
     public static byte[] readFromRFID(int channel, byte[] packet, int length) {
@@ -165,8 +153,7 @@ public class ReadRFID {
         return packet;
     }
 
-    public static boolean
-    writeToRFID(int channel, byte fullAddress, byte data) {
+    public static boolean writeToRFID(int channel, byte fullAddress, byte data) {
 
         byte[] packet = new byte[2];
         packet[0] = fullAddress;
@@ -179,9 +166,7 @@ public class ReadRFID {
     }
 
     public static String bytesToHex(byte[] bytes) {
-        final char[] hexArray = {
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            'A', 'B', 'C', 'D', 'E', 'F' };
+        final char[] hexArray = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
         char[] hexChars = new char[bytes.length * 2];
         int v;
         for (int j = 0; j < bytes.length; j++) {
