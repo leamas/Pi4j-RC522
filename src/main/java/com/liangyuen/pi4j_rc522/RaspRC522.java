@@ -169,19 +169,15 @@ public class RaspRC522 {
     public RaspRC522(int speed, int resetPinNumber) {
         this.rstPinNumber =
             resetPinNumber == -1 ? DEFAULT_RST_PIN : resetPinNumber;
-        if (speed < 500000 || speed > 32000000)
+        if (speed < 50000 || speed > 32000000)
             throw new IllegalArgumentException("Speed out of range");
         this.speed = speed;
 
         Gpio.wiringPiSetup(); // Enable wiringPi pin schema
         int fd = Spi.wiringPiSPISetup(spiChannel, speed);
-        if (fd <= -1) {
-            System.out.println(" --> Failed to set up  SPI communication");
-            // Stop code when error happened
-            return;
-        } else {
-            // System.out.println(" --> Successfully loaded SPI communication");
-        }
+        if (fd <= -1)
+            throw new IllegalStateException("SPI communication setup failed");
+        // System.out.println(" --> Successfully loaded SPI communication");
 
         Gpio.pinMode(rstPinNumber, Gpio.OUTPUT);
         Gpio.digitalWrite(rstPinNumber, Gpio.HIGH);
