@@ -33,6 +33,10 @@ import com.pi4j.wiringpi.Spi;
  */
 
 public class RaspRC522 {
+    public static final int     DEFAULT_RST_PIN     = 22;
+    public static final int     DEFAULT_SPEED       = 50000;
+
+
     public static final byte    PCD_IDLE            = 0x00;
     public static final byte    PCD_AUTHENT         = 0x0E;
     public static final byte    PCD_RECEIVE         = 0x08;
@@ -127,27 +131,48 @@ public class RaspRC522 {
     public static final byte    Reserved33          = 0x3E;
     public static final byte    Reserved34          = 0x3F;
 
-    private int                 NRSTPD              = 22; // RST Pin number
-    private int                 speed               = 500000;
-    private int                 spiChannel          = 0;
-    private final int           MAX_LEN             = 16;
+    private int rstPinNumber = 22; // RST Pin number
+    private int speed = 500000;
+    private int spiChannel = 0;
+    private final int MAX_LEN = 16;
 
-    public RaspRC522(int Speed, int PinReset) {
-        this.NRSTPD = PinReset;
-        if (Speed < 500000 || Speed > 32000000) {
-            System.out.println("Speed out of range");
-            return;
-        } else
-            this.speed = Speed;
-        RC522_Init();
-    }
-
+    /**
+     * Create a RaspRC532 using speed = DEFAULT_SPEED and DEFAULT_RST_PIN reset pin
+     * number.
+     */
     public RaspRC522() {
-        this.speed = 500000;
-        RC522_Init();
+        this(DEFAULT_SPEED, DEFAULT_RST_PIN);
     }
 
-    public void RC522_Init() {
+    /**
+     * Create a RaspRC532 using DEFAULT_RST_PIN as reset pin number.
+     *
+     * @param speed
+     *            Transfer speed as defined by com.pi4j.io.spi.imp, in
+     *            range 500kHz - 32MHz.
+     */
+    public RaspRC522(int speed) {
+        this(speed, DEFAULT_RST_PIN);
+    }
+
+    /**
+     * Create a RaspRC522
+     *
+     * @param speed
+     *            transfer speed as defined by com.pi4j.io.spi.imp, in
+     *            range 500kHz - 32MHz.
+     * @param resetPinNumber
+     *            The GPIO pin driven low on interrupt conditions in the
+     *            driver. If -1, the default value DEFAULT_RST_PIN_ is used.
+     */
+
+    public RaspRC522(int speed, int resetPinNumber) {
+        this.rstPinNumber =
+            resetPinNumber == -1 ? DEFAULT_RST_PIN : resetPinNumber;
+        if (speed < 500000 || speed > 32000000)
+            throw new IllegalArgumentException("Speed out of range");
+        this.speed = speed;
+
         Gpio.wiringPiSetup(); // Enable wiringPi pin schema
         int fd = Spi.wiringPiSPISetup(spiChannel, speed);
         if (fd <= -1) {
@@ -158,8 +183,8 @@ public class RaspRC522 {
             // System.out.println(" --> Successfully loaded SPI communication");
         }
 
-        Gpio.pinMode(NRSTPD, Gpio.OUTPUT);
-        Gpio.digitalWrite(NRSTPD, Gpio.HIGH);
+        Gpio.pinMode(rstPinNumber, Gpio.OUTPUT);
+        Gpio.digitalWrite(rstPinNumber, Gpio.HIGH);
         reset();
         writeRC522(TModeReg, (byte) 0x8D);
         writeRC522(TPrescalerReg, (byte) 0x3E);
@@ -313,7 +338,7 @@ public class RaspRC522 {
     }
 
     /**
-     * Setup up transceive operation mode.
+     * Setup up transcieve operation mode.
      *
      * @param req_mode a PICC_ mode request
      * @param back_bits out, on return backbits[0] is number of bits in fifo.
