@@ -1,4 +1,4 @@
-package com.liangyuen.util;
+package com.liangyuen.pi4j_rc522;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
