@@ -6,30 +6,47 @@ import com.pi4j.wiringpi.Spi;
 /**
  *
  * Basic API for handling the rc-522 RFID reader supporting
- *   - Tag detection
- *   - Collision detection
- *   - Unlocking/locking encrypted data
- *   - Reading encrypted data
- *   - Writing encrypted data.
- *
+ *   <ul>
+ *     <li> Tag detection.
+ *     <li> Collision detection.
+ *     <li> Unlocking/locking encrypted data.
+ *     <li> Reading data.
+ *     <li> Writing data.
+ *   </ul>
+ *<p>
  * The card data is organized in a number of sectors, each of which divided
  * in a number of blocks.
  *
  * Blocks are handled using a simple cycle:
- *   - authCard() decrypts the data and enables further block operations.
- *   - read() and write() can be done on decrypted data after authCard()
- *   - stopCrypto() restores the encryption state to encrypted and loocked.
+ *   <ul>
+ *     <li> selectTag() selects a tag for further authCard() operations.
+ *     <li> authCard() decrypts the data and enables further block
+ *          operations.
+ *     <li> read() and write() can be done on decrypted data after
+ *          authCard().
+ *     <li> stopCrypto() restores the encryption state to encrypted and
+ *          loocked.
+ *   </ul>
  *
  * The module is unsynchronized and fails badly if there is more than one
  * instance.
- *
+ * <p>
+ * See also:
+ *     <a href="https://www.elecrow.com/download/MFRC522%20Datasheet.pdf">
+ *     Datasheet
+ * </a>
+ * <br>
+ * See also:<a href="https://github.com/ondryaso/pi-rc522" target="_blank">
+ *     pi-rc522 - original python sources
+ * </a>
+ * <br>
+ * See also:<a href="https://github.com/Pi4J/pi4j" target="_blank">
+ *     pi4j library
+ * </a>
+ * <p>
  * Created by Liang on 2016/3/17,originated from  Python RC522
  *
  * Copyright (c) Alec Leamas, 2018
- *
- * @see https://www.elecrow.com/download/MFRC522%20Datasheet.pdf
- * @see https://github.com/ondryaso/pi-rc522
- *
  */
 
 public class RaspRC522 {
@@ -428,7 +445,7 @@ public class RaspRC522 {
      * Authenticates to use specified block in sector 0. Tag must be selected
      * using select_tag(uid) before auth.
      *
-     * @param auth_mode RFID.auth_a or RFID.auth_b
+     * @param auth_mode RaspRC522.auth_a or RaspRC522.auth_b
      * @param block_address the block to unlock
      * @param key  six bytes key.
      * @param uid uid (4 bytes) for user to connect to.
@@ -463,7 +480,7 @@ public class RaspRC522 {
      *
      * @param auth_mode RFID.auth_a or RFID.auth_b
      * @param sector Sector containing block to unlock.
-     * @param block_Address Block to unlock.
+     * @param block Address Block to unlock.
      * @param key  Six bytes encryption key.
      * @param uid Uid (4 bytes) for user to connect to.
      * @return MI_OK if successful, else an MI_ error code.
@@ -481,7 +498,7 @@ public class RaspRC522 {
     }
 
     /**
-     * Reads data from block in sector 0. Block must be authenticated
+     * Read data from a block address. Block must be authenticated
      * using authCard() before calling read().
      *
      * @param block_address Block number to read from
@@ -510,7 +527,7 @@ public class RaspRC522 {
      * using authCard() before calling read().
      *
      * @param sector Sector containing block.
-     * @param block_address Block number to read from
+     * @param block Address Block number to read from
      * @param back_data On successful return, holds data.
      * @return MI_OK if successful, else an MI_ error code.
      */
@@ -571,7 +588,7 @@ public class RaspRC522 {
      * Write data to block in given sector. Block must be authenticated
      * using authCard() before calling write().
      *
-     * @param block_address Block number to read from
+     * @param block Address Block number to read from
      * @param sector Sector containing block.
      * @param data On successful return, holds data read.
      * @return MI_OK if successful, else an MI_ error code.

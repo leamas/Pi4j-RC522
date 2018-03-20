@@ -36,8 +36,8 @@ public class ByteArray {
      *
      * @param delim Delimiter printed between each byte, possibly empty
      *              or null.
-     * @return Formatted string with two hexadecimal digits for each byte
-     *         with a possibly empty delimiter in between.
+     * @return String with each byte formatted as two hex digits with the
+     *         separator between each byte.
      */
     public String toString(String delim)
     {
@@ -51,7 +51,10 @@ public class ByteArray {
         return String.join(delim == null ? "" : delim, stringBytes);
     }
 
-    /** Return printable representation of array without delimiters. */
+    /**
+     * Return printable representation of array without delimiters.
+     * @return String with each byte formatted as two hex digits.
+     */
     public String toString()
     {
         return toString(null);

@@ -21,9 +21,9 @@
         </dependency>
     </dependencies>
     <build>
-        <finalName>pi4j_rc522</finalName>
-            <plugins>
-                <plugin>
+        <finalName>pi4j-rc522</finalName>
+        <plugins>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.0.2</version>
