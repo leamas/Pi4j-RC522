@@ -131,8 +131,8 @@ public class RaspRC522 {
     public static final byte    Reserved33          = 0x3E;
     public static final byte    Reserved34          = 0x3F;
 
-    private int rstPinNumber = 22; // RST Pin number
-    private int speed = 500000;
+    private int rstPinNumber = DEFAULT_RST_PIN ;
+    private int speed = DEFAULT_SPEED;
     private int spiChannel = 0;
     private final int MAX_LEN = 16;
 
