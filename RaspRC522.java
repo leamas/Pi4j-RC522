@@ -5,12 +5,6 @@ import com.pi4j.wiringpi.Spi;
 
 /** Created by Liang on 2016/3/17,originated from Python RC522 */
 public class RaspRC522 {
-    private int NRSTPD = 22; // RST Pin number,default 22
-    private int Speed = 500000;
-    private int SPI_Channel = 0;
-
-    private final int MAX_LEN = 16;
-
     public static final byte PCD_IDLE = 0x00;
     public static final byte PCD_AUTHENT = 0x0E;
     public static final byte PCD_RECEIVE = 0x08;
@@ -104,6 +98,12 @@ public class RaspRC522 {
     public static final byte Reserved32 = 0x3D;
     public static final byte Reserved33 = 0x3E;
     public static final byte Reserved34 = 0x3F;
+
+    private int NRSTPD = 22; // RST Pin number,default 22
+    private int Speed = 500000;
+    private int SPI_Channel = 0;
+    private final int MAX_LEN = 16;
+
 
     public RaspRC522(int Speed, int PinReset) {
         this.NRSTPD = PinReset;
@@ -253,6 +253,35 @@ public class RaspRC522 {
         return status;
     }
 
+    private void Calculate_CRC(byte[] data) {
+        int i, n;
+        ClearBitMask(DivIrqReg, (byte) 0x04);
+        SetBitMask(FIFOLevelReg, (byte) 0x80);
+
+        for (i = 0; i < data.length - 2; i++)
+            Write_RC522(FIFODataReg, data[i]);
+        Write_RC522(CommandReg, PCD_CALCCRC);
+        i = 255;
+        while (true) {
+            n = Read_RC522(DivIrqReg);
+            i--;
+            if ((i == 0) || ((n & 0x04) > 0))
+                break;
+        }
+        data[data.length - 2] = Read_RC522(CRCResultRegL);
+        data[data.length - 1] = Read_RC522(CRCResultRegM);
+    }
+
+    // Convert sector to blockaddress
+    // sector-0~15
+    // block-0~3
+    // return blockaddress
+    private byte Sector2BlockAddress(byte sector, byte block) {
+        if (sector < 0 || sector > 15 || block < 0 || block > 3)
+            return (byte) (-1);
+        return (byte) (sector * 4 + block);
+    }
+
     public int Request(byte req_mode, int[] back_bits) {
         int status;
         byte tagType[] = new byte[1];
@@ -302,25 +331,6 @@ public class RaspRC522 {
             }
         }
         return status;
-    }
-
-    private void Calculate_CRC(byte[] data) {
-        int i, n;
-        ClearBitMask(DivIrqReg, (byte) 0x04);
-        SetBitMask(FIFOLevelReg, (byte) 0x80);
-
-        for (i = 0; i < data.length - 2; i++)
-            Write_RC522(FIFODataReg, data[i]);
-        Write_RC522(CommandReg, PCD_CALCCRC);
-        i = 255;
-        while (true) {
-            n = Read_RC522(DivIrqReg);
-            i--;
-            if ((i == 0) || ((n & 0x04) > 0))
-                break;
-        }
-        data[data.length - 2] = Read_RC522(CRCResultRegL);
-        data[data.length - 1] = Read_RC522(CRCResultRegM);
     }
 
     public int Select_Tag(byte[] uid) {
@@ -477,16 +487,6 @@ public class RaspRC522 {
             }
         }
         return data;
-    }
-
-    // Convert sector to blockaddress
-    // sector-0~15
-    // block-0~3
-    // return blockaddress
-    private byte Sector2BlockAddress(byte sector, byte block) {
-        if (sector < 0 || sector > 15 || block < 0 || block > 3)
-            return (byte) (-1);
-        return (byte) (sector * 4 + block);
     }
 
     // uid-5 bytes
