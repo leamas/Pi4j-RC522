@@ -3,7 +3,35 @@ package com.liangyuen.util;
 import com.pi4j.wiringpi.Gpio;
 import com.pi4j.wiringpi.Spi;
 
-/** Created by Liang on 2016/3/17,originated from Python RC522 */
+/**
+ *
+ * Basic API for handling the rc-522 RFID reader supporting
+ *   - Tag detection
+ *   - Collision detection
+ *   - Unlocking/locking encrypted data
+ *   - Reading encrypted data
+ *   - Writing encrypted data.
+ *
+ * The card data is organized in a number of sectors, each of which divided
+ * in a number of blocks.
+ *
+ * Blocks are handled using a simple cycle:
+ *   - authCard() decrypts the data and enables further block operations.
+ *   - read() and write() can be done on decrypted data after authCard()
+ *   - stopCrypto() restores the encryption state to encrypted and loocked.
+ *
+ * The module is unsynchronized and fails badly if there is more than one
+ * instance.
+ *
+ * Created by Liang on 2016/3/17,originated from  Python RC522
+ *
+ * Copyright (c) Alec Leamas, 2018
+ *
+ * @see https://www.elecrow.com/download/MFRC522%20Datasheet.pdf
+ * @see https://github.com/ondryaso/pi-rc522
+ *
+ */
+
 public class RaspRC522 {
     public static final byte PCD_IDLE = 0x00;
     public static final byte PCD_AUTHENT = 0x0E;
@@ -272,16 +300,26 @@ public class RaspRC522 {
         data[data.length - 1] = Read_RC522(CRCResultRegM);
     }
 
-    // Convert sector to blockaddress
-    // sector-0~15
-    // block-0~3
-    // return blockaddress
+    /**
+     * Convert sector  to blockaddress.
+     *
+     * @param sector 0-15
+     * @param block 0-3
+     * @return block address
+     */
     private byte Sector2BlockAddress(byte sector, byte block) {
         if (sector < 0 || sector > 15 || block < 0 || block > 3)
             return (byte) (-1);
         return (byte) (sector * 4 + block);
     }
 
+    /**
+     * Setup up transceive operation mode.
+     *
+     * @param req_mode a PICC_ mode request
+     * @param back_bits out, on return backbits[0] is number of bits in fifo.
+     * @return MI_OK if successful, else a MI_ error code.
+     */
     public int Request(byte req_mode, int[] back_bits) {
         int status;
         byte tagType[] = new byte[1];
@@ -302,8 +340,13 @@ public class RaspRC522 {
         return status;
     }
 
-    // Anti-collision detection.
-    // Returns tuple of (error state, tag ID).
+    /**
+     * Check if there is a valid tag to communicate with out there.
+     *
+     * @param back_data On successful return, contains the located tag id
+     *                  as five bytes.
+     * @return MI_OK if successful, else an MI_ error code.
+     */
     public int AntiColl(byte[] back_data) {
         int status;
         byte[] serial_number = new byte[2];
@@ -333,6 +376,12 @@ public class RaspRC522 {
         return status;
     }
 
+    /**
+     * Select a uid for further unlock/lock operations.
+     *
+     * @param uid UID to select, five bytes.
+     * @return Read data from analog fifo if available, else 0.
+     */
     public int Select_Tag(byte[] uid) {
         int status;
         byte data[] = new byte[9];
@@ -355,13 +404,16 @@ public class RaspRC522 {
             return 0;
     }
 
-    // Authenticates to use specified block address. Tag must be selected using
-    // select_tag(uid) before
-    // auth.
-    // auth_mode-RFID.auth_a or RFID.auth_b
-    // block_address- used to authenticate
-    // key-list or tuple with six bytes key
-    // uid-list or tuple with four bytes tag ID
+    /**
+     * Authenticates to use specified block in sector 0. Tag must be selected
+     * using select_tag(uid) before auth.
+     *
+     * @param auth_mode RFID.auth_a or RFID.auth_b
+     * @param block_address the block to unlock
+     * @param key  six bytes key.
+     * @param uid uid (4 bytes) for user to connect to.
+     * @return MI_OK if successful, else an MI_ error code.
+     */
     public int Auth_Card(byte auth_mode, byte block_address,
                          byte[] key, byte[] uid) {
         int status;
@@ -385,7 +437,17 @@ public class RaspRC522 {
         return status;
     }
 
-    //
+    /**
+     * Authenticates to use specified block in given sector. Tag must
+     * be selected using select_tag(uid) before auth.
+     *
+     * @param auth_mode RFID.auth_a or RFID.auth_b
+     * @param sector Sector containing block to unlock.
+     * @param block_Address Block to unlock.
+     * @param key  Six bytes encryption key.
+     * @param uid Uid (4 bytes) for user to connect to.
+     * @return MI_OK if successful, else an MI_ error code.
+     */
     public int Auth_Card(byte auth_mode, byte sector, byte block,
                          byte[] key, byte[] uid)
     {
@@ -393,15 +455,19 @@ public class RaspRC522 {
             Auth_Card(auth_mode, Sector2BlockAddress(sector, block), key, uid);
     }
 
-    // Ends operations with Crypto1 usage.
+    /** End operation initiated by authCard(). */
     public void Stop_Crypto() {
         ClearBitMask(Status2Reg, (byte) 0x08);
     }
 
-    // Reads data from block. You should be authenticated before calling read.
-    // Returns tuple of (result state, read data).
-    // block_address
-    // back_data-data to be read,16 bytes
+    /**
+     * Reads data from block in sector 0. Block must be authenticated
+     * using authCard() before calling read().
+     *
+     * @param block_address Block number to read from
+     * @param back_data On successful return, holds data.
+     * @return MI_OK if successful, else an MI_ error code.
+     */
     public int Read(byte block_address, byte[] back_data) {
         int status;
         byte data[] = new byte[4];
@@ -419,14 +485,27 @@ public class RaspRC522 {
         return status;
     }
 
-    //
+    /**
+     * Read data from block in given sector. Block must be authenticated
+     * using authCard() before calling read().
+     *
+     * @param sector Sector containing block.
+     * @param block_address Block number to read from
+     * @param back_data On successful return, holds data.
+     * @return MI_OK if successful, else an MI_ error code.
+     */
     public int Read(byte sector, byte block, byte[] back_data) {
         return Read(Sector2BlockAddress(sector, block), back_data);
     }
 
-    // Writes data to block. You should be authenticated before calling write.
-    // Returns error state.
-    // data-16 bytes
+    /**
+     * Write data to block in sector 0. Block must be authenticated
+     * using authCard() before calling write().
+     *
+     * @param block_address Block to read
+     * @param data On successful return, read data (16 bytes)
+     * @return MI_OK if successful, else an MI_ error code.
+     */
     public int Write(byte block_address, byte[] data) {
         int status;
         byte buff[] = new byte[4];
@@ -468,7 +547,15 @@ public class RaspRC522 {
         return status;
     }
 
-    //
+    /**
+     * Write data to block in given sector. Block must be authenticated
+     * using authCard() before calling write().
+     *
+     * @param block_address Block number to read from
+     * @param sector Sector containing block.
+     * @param data On successful return, holds data read.
+     * @return MI_OK if successful, else an MI_ error code.
+     */
     public int Write(byte sector, byte block, byte[] data) {
         return Write(Sector2BlockAddress(sector, block), data);
     }

@@ -25,7 +25,6 @@ import com.pi4j.wiringpi.Spi;
  *
  * Created by Liang on 2016/3/17,originated from  Python RC522
  *
- * Copyright (c) Liang Yuen, 2016
  * Copyright (c) Alec Leamas, 2018
  *
  * @see https://www.elecrow.com/download/MFRC522%20Datasheet.pdf

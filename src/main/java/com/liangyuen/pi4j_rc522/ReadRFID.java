@@ -3,7 +3,6 @@ package com.liangyuen.pi4j_rc522;
 /**
  * Created by Liang on 2016/3/7.
  *
- *  Copyright (c) Liang Yuen, 2016
  *  Copyright (c) Alec Leamas, 2018
  */
 
@@ -12,7 +11,7 @@ import com.pi4j.wiringpi.Spi;
 public class ReadRFID {
     static ByteArray KEY_A = new ByteArray("ff:ff:ff:ff:ff:ff");
     static ByteArray KEY_B = new ByteArray("ff:ff:ff:ff:ff:ff");
-  
+
     public static void main(String[] args) throws InterruptedException {
         RaspRC522 rc522 = new RaspRC522();
         int back_bits[] = new int[1];
@@ -24,7 +23,7 @@ public class ReadRFID {
         byte sector = 15, block = 2;
         while (true) {
             Thread.sleep(2000);
-            if (rc522.setupTranscieve(RaspRC522.PICC_REQIDL, back_bits) 
+            if (rc522.setupTranscieve(RaspRC522.PICC_REQIDL, back_bits)
                 == RaspRC522.MI_OK)
             {
                 System.out.println("Detected:"+back_bits[0]);
@@ -52,10 +51,10 @@ public class ReadRFID {
                 continue;
             }
             status = rc522.read(sector, block, data);
-            System.out.println("Successfully authenticated,Read data=" 
+            System.out.println("Successfully authenticated,Read data="
                                + new ByteArray(data).toString());
             status = rc522.read(sector, (byte) 3, data);
-            System.out.println("Read control block data=" 
+            System.out.println("Read control block data="
                                + new ByteArray(data).toString());
             rc522.stopCrypto();
 //

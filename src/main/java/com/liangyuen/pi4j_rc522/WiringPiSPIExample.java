@@ -2,7 +2,6 @@ package com.liangyuen.pi4j_rc522;
 
 /**
  *  Created by Liang on 2016/3/13.
- *  Copyright (c) Liang Yuen, 2016
  *  Copyright (c) Alec Leamas, 2018
  */
 
