@@ -1,4 +1,9 @@
+
 package com.liangyuen.pi4j_rc522;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 /**
  *  Created by Liang on 2016/3/13.
@@ -7,6 +12,9 @@ package com.liangyuen.pi4j_rc522;
 
 
 public class WiringPiSPIExample {
+
+    private static Logger logger =
+        LogManager.getLogger(ReadRFID.class.getName());
 
     public static void main(String args[]) throws InterruptedException {
         RaspRC522 rc522 = new RaspRC522();
@@ -17,28 +25,28 @@ public class WiringPiSPIExample {
         byte sector = 15, block = 3;
 
         if (rc522.setupTranscieve(RaspRC522.PICC_REQIDL, back_len) == rc522.MI_OK)
-            System.out.println("Detecte card:" + back_len[0]);
+            logger.info("Detecte card:" + back_len[0]);
         if (rc522.antiColl(tagid) != RaspRC522.MI_OK) {
-            System.out.println("anticoll error");
+            logger.info("anticoll error");
             return;
         }
         strUID = new ByteArray(tagid).toString(",");
-        // System.out.println(strUID);
-        // System.out.println("Card Read UID:" + tagid[0] + "," + tagid[1] + "," +
+        // logger.info(strUID);
+        // logger.info("Card Read UID:" + tagid[0] + "," + tagid[1] + "," +
         // tagid[2] + "," + tagid[3]);
-        System.out.println("Card Read UID:" + strUID.substring(0, 2) + "," + strUID.substring(2, 4) + ","
+        logger.info("Card Read UID:" + strUID.substring(0, 2) + "," + strUID.substring(2, 4) + ","
                 + strUID.substring(4, 6) + "," + strUID.substring(6, 8));
 
         byte[] defaultkey = new byte[] { (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF };
         // Select the scanned tag
         int size = rc522.selectTag(tagid);
-        System.out.println("Size=" + size);
+        logger.info("Size=" + size);
 
         // Authenticate
 
         status = rc522.authCard(RaspRC522.PICC_AUTHENT1A, sector, block, defaultkey, tagid);
         if (status != RaspRC522.MI_OK) {
-            System.out.println("Authenticate error");
+            logger.info("Authenticate error");
             return;
         }
         byte data[] = new byte[16];
@@ -50,9 +58,9 @@ public class WiringPiSPIExample {
         System.arraycopy(keyB, 0, data, 10, 6);
         status = rc522.write(sector, block, data);
         if (status == RaspRC522.MI_OK) {
-            System.out.println("Write data finished");
+            logger.info("Write data finished");
         } else {
-            System.out.println("Write data error,status=" + status);
+            logger.info("Write data error,status=" + status);
             return;
         }
     }

@@ -1,5 +1,8 @@
 package com.liangyuen.pi4j_rc522;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * Created by Liang on 2016/3/7.
  *
@@ -11,8 +14,11 @@ import com.pi4j.wiringpi.Spi;
 public class ReadRFID {
     static ByteArray KEY_A = new ByteArray("ff:ff:ff:ff:ff:ff");
     static ByteArray KEY_B = new ByteArray("ff:ff:ff:ff:ff:ff");
+    private static Logger logger =
+        LogManager.getLogger(ReadRFID.class.getName());
 
     public static void main(String[] args) throws InterruptedException {
+        logger.info("Initiating ReadRFID test program");
         RaspRC522 rc522 = new RaspRC522();
         int back_bits[] = new int[1];
         ByteArray strUID;
@@ -26,36 +32,36 @@ public class ReadRFID {
             if (rc522.setupTranscieve(RaspRC522.PICC_REQIDL, back_bits)
                 == RaspRC522.MI_OK)
             {
-                System.out.println("Detected:"+back_bits[0]);
+                logger.info("Detected:"+back_bits[0]);
             }
             if (rc522.antiColl(tagid) != RaspRC522.MI_OK)
             {
-                System.out.println("anticoll error");
+                logger.debug("anticoll error");
                 continue;
             }
 
             int size=rc522.selectTag(tagid);
-            System.out.println("Size="+size);
+            logger.debug("Size="+size);
 
 //          rc522.selectMirareOne(tagid);
             strUID = new ByteArray(tagid);
             // System.out.println(strUID);
-            System.out.println("New UID: " + strUID.toString(","));
+            logger.debug("New UID: " + strUID.toString(","));
 
             // Authenticate
             byte data[] = new byte[16];
             status = rc522.authCard(RaspRC522.PICC_AUTHENT1A, sector, block,
                                     KEY_A.toBytes(), tagid);
             if (status != RaspRC522.MI_OK) {
-                System.out.println("Authenticate A error");
+                logger.info("Authenticate A error");
                 continue;
             }
             status = rc522.read(sector, block, data);
-            System.out.println("Successfully authenticated,Read data="
-                               + new ByteArray(data).toString());
+            logger.info("Successfully authenticated,Read data: "
+                        + new ByteArray(data).toString());
             status = rc522.read(sector, (byte) 3, data);
-            System.out.println("Read control block data="
-                               + new ByteArray(data).toString());
+            logger.info("Read control block data: "
+                        + new ByteArray(data).toString());
             rc522.stopCrypto();
 //
 //      for (i = 0; i < 16; i++) {
@@ -114,26 +120,25 @@ public class ReadRFID {
             packet[3] = (byte) 0x84; // ADDRESS 2 Gives data of Address 2
             packet[4] = (byte) 0x86; // ADDRESS 3 Gives data of Address 3
 
-            System.out.println("-----------------------------------------------");
-            System.out.println("Data to be transmitted:");
-            System.out.println("[TX] " + bytesToHex(packet));
-            System.out.println("[TX1] " + packet[1]);
-            System.out.println("[TX2] " + packet[2]);
-            System.out.println("[TX3] " + packet[3]);
-            System.out.println("[TX4] " + packet[4]);
-            System.out.println("Transmitting data...");
+            logger.debug("Data to be transmitted:");
+            logger.debug("[TX] " + bytesToHex(packet));
+            logger.debug("[TX1] " + packet[1]);
+            logger.debug("[TX2] " + packet[2]);
+            logger.debug("[TX3] " + packet[3]);
+            logger.debug("[TX4] " + packet[4]);
+            logger.debug("Transmitting data...");
 
             // Send data to Reader and receive answerpacket.
             packet = readFromRFID(0, packet, packetlength);
 
-            System.out.println("Data transmitted, packets received.");
-            System.out.println("Received Packets (First packet to be ignored!)");
-            System.out.println("[RX] " + bytesToHex(packet));
-            System.out.println("[RX1] " + packet[1]);
-            System.out.println("[RX2] " + packet[2]);
-            System.out.println("[RX3] " + packet[3]);
-            System.out.println("[RX4] " + packet[4]);
-            System.out.println("-----------------------------------------------");
+            logger.debug("Data transmitted, packets received.");
+            logger.debug("Received Packets (First packet to be ignored!)");
+            logger.debug("[RX] " + bytesToHex(packet));
+            logger.debug("[RX1] " + packet[1]);
+            logger.debug("[RX2] " + packet[2]);
+            logger.debug("[RX3] " + packet[3]);
+            logger.debug("[RX4] " + packet[4]);
+            logger.debug("-----------------------------------------------");
 
             if (packet.length == 0) {
                 // Reset when no packet received

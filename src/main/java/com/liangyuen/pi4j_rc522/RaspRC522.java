@@ -1,5 +1,8 @@
 package com.liangyuen.pi4j_rc522;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.pi4j.wiringpi.Gpio;
 import com.pi4j.wiringpi.Spi;
 
@@ -153,6 +156,9 @@ public class RaspRC522 {
     private int spiChannel = 0;
     private final int MAX_LEN = 16;
 
+    private static Logger logger =
+        LogManager.getLogger(RaspRC522.class.getName());
+
     /**
      * Create a RaspRC532 using speed = DEFAULT_SPEED and DEFAULT_RST_PIN reset pin
      * number.
@@ -184,6 +190,7 @@ public class RaspRC522 {
      */
 
     public RaspRC522(int speed, int resetPinNumber) {
+        logger.info("Initiating RaspRC522, speed: " + speed);
         this.rstPinNumber =
             resetPinNumber == -1 ? DEFAULT_RST_PIN : resetPinNumber;
         if (speed < 50000 || speed > 32000000)
@@ -194,7 +201,7 @@ public class RaspRC522 {
         int fd = Spi.wiringPiSPISetup(spiChannel, speed);
         if (fd <= -1)
             throw new IllegalStateException("SPI communication setup failed");
-        // System.out.println(" --> Successfully loaded SPI communication");
+        logger.debug("Successfully loaded SPI communication");
 
         Gpio.pinMode(rstPinNumber, Gpio.OUTPUT);
         Gpio.digitalWrite(rstPinNumber, Gpio.HIGH);
@@ -218,8 +225,8 @@ public class RaspRC522 {
         data[1] = value;
         int result = Spi.wiringPiSPIDataRW(spiChannel, data);
         if (result == -1)
-            System.out.println("Device write  error,address="
-                               + address + ",value=" + value);
+            logger.warn("Device write error,address: %s, value: %s",
+                        address, value);
     }
 
     private byte readRC522(byte address) {
@@ -228,7 +235,7 @@ public class RaspRC522 {
         data[1] = 0;
         int result = Spi.wiringPiSPIDataRW(spiChannel, data);
         if (result == -1)
-            System.out.println("Device read  error,address=" + address);
+            logger.warn("Device read error,address: " + address);
         return data[1];
     }
 
@@ -285,7 +292,7 @@ public class RaspRC522 {
             n = readRC522(CommIrqReg);
             i--;
             if ((i == 0) || (n & 0x01) > 0 || (n & irq_wait) > 0) {
-                // System.out.println("Write_Card i="+i+",n="+n);
+                logger.debug("Write_Card i=%d, n=%d", i, n);
                 break;
             }
         }
@@ -370,12 +377,14 @@ public class RaspRC522 {
         status = writeCard(PCD_TRANSCEIVE, tagType, 1,
                             data_back, back_bits, backLen);
         if (status != MI_OK || back_bits[0] != 0x10) {
-            // System.out.println("status="+status+",back_bits[0]="+back_bits[0]);
+            logger.debug("setupTranscieve, status: %d, back_bits[0]: %d",
+                         status,  back_bits[0]);
             status = MI_ERR;
         }
 
         return status;
     }
+
 
     /**
      * Check if there is a valid tag to communicate with out there.
@@ -403,11 +412,11 @@ public class RaspRC522 {
                     serial_number_check ^= back_data[i];
                 if (serial_number_check != back_data[4]) {
                     status = MI_ERR;
-                    System.out.println("check error");
+                    logger.warn("anticoll check error");
                 }
             } else {
                 status = MI_OK;
-                System.out.println("backLen[0]=" + backLen[0]);
+                logger.info("antiColl, backLen[0]: " + backLen[0]);
             }
         }
         return status;
@@ -557,12 +566,12 @@ public class RaspRC522 {
         calculateCRC(buff);
         status = writeCard(PCD_TRANSCEIVE, buff, buff.length,
                             back_data, back_bits, backLen);
-        // System.out.println("write_card status="+status);
-        // System.out.println("back_bits[0]="+back_bits[0]+",(back_data[0] &
-        // 0x0F)="+(back_data[0] &
-        // 0x0F));
+        logger.debug("write_card status: "+status);
+        logger.debug("back_bits[0]: %d, back_data[0]: 0x%x",
+                     back_bits[0], back_data[0]);
         if (status != MI_OK || back_bits[0] != 4
             || (back_data[0] & 0x0F) != 0x0A) {
+                logger.debug("write: status/backbits error: status: " + status);
             status = MI_ERR;
         }
         if (status == MI_OK) {
@@ -572,12 +581,13 @@ public class RaspRC522 {
             status = writeCard(PCD_TRANSCEIVE,
                                 buff_write, buff_write.length,
                                 back_data, back_bits, backLen);
-            // System.out.println("write_card data status="+status);
-            // System.out.println("back_bits[0]="+back_bits[0]+",(back_data[0] &
-            // 0x0F)="+(back_data[0] &
-            // 0x0F));
+            logger.debug("write_card data status: " + status);
+            logger.debug("back_bits[0]: %d, back_data[0] : 0x%x",
+                         back_bits[0], back_data[0]);
             if (status != MI_OK || back_bits[0] != 4
                 || (back_data[0] & 0x0F) != 0x0A) {
+                    logger.debug("write: status/backbits error 2: status: "
+                                 + status);
                     status = MI_ERR;
             }
         }
