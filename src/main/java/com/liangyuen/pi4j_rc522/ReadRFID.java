@@ -26,7 +26,8 @@ public class ReadRFID {
 //      int i;
         int status;
 //      byte blockaddress = 8;
-        byte sector = 15, block = 2;
+        BlockAddress address = new BlockAddress(15, 2);
+        byte sector = 15; //, block = 2;
         while (true) {
             Thread.sleep(2000);
             if (rc522.setupTranscieve(RaspRC522.PICC_REQIDL, back_bits)
@@ -50,16 +51,16 @@ public class ReadRFID {
 
             // Authenticate
             byte data[] = new byte[16];
-            status = rc522.authCard(RaspRC522.PICC_AUTHENT1A, sector, block,
+            status = rc522.authCard(RaspRC522.PICC_AUTHENT1A, address,
                                     KEY_A.toBytes(), tagid);
             if (status != RaspRC522.MI_OK) {
                 logger.info("Authenticate A error");
                 continue;
             }
-            status = rc522.read(sector, block, data);
+            status = rc522.read(new BlockAddress(0, 3), data);
             logger.info("Successfully authenticated,Read data: "
                         + new ByteArray(data).toString());
-            status = rc522.read(sector, (byte) 3, data);
+            status = rc522.read(new BlockAddress(0, 3), data);
             logger.info("Read control block data: "
                         + new ByteArray(data).toString());
             rc522.stopCrypto();

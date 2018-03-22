@@ -82,6 +82,7 @@ public class RaspRC522 {
     public static final int     MI_OK               = 0;
     public static final int     MI_NOTAGERR         = 1;
     public static final int     MI_ERR              = 2;
+    public static final int     MI_CRC_ERR          = 3;
 
     public static final byte    Reserved00          = 0x00;
     public static final byte    CommandReg          = 0x01;
@@ -344,18 +345,6 @@ public class RaspRC522 {
         data[data.length - 1] = readRC522(CRCResultRegM);
     }
 
-    /**
-     * Convert sector  to blockaddress.
-     *
-     * @param sector 0-15
-     * @param block 0-3
-     * @return block address
-     */
-    private byte sector2BlockAddress(byte sector, byte block) {
-        if (sector < 0 || sector > 15 || block < 0 || block > 3)
-            return (byte) (-1);
-        return (byte) (sector * 4 + block);
-    }
 
     /**
      * Setup up transcieve operation mode.
@@ -455,12 +444,12 @@ public class RaspRC522 {
      * using select_tag(uid) before auth.
      *
      * @param auth_mode RaspRC522.auth_a or RaspRC522.auth_b
-     * @param block_address the block to unlock
+     * @param address the block to unlock
      * @param key  six bytes key.
      * @param uid uid (4 bytes) for user to connect to.
      * @return MI_OK if successful, else an MI_ error code.
      */
-    public int authCard(byte auth_mode, byte block_address,
+    public int authCard(byte auth_mode, BlockAddress address,
                          byte[] key, byte[] uid) {
         int status;
         byte data[] = new byte[12];
@@ -470,7 +459,7 @@ public class RaspRC522 {
         int i, j;
 
         data[0] = auth_mode;
-        data[1] = block_address;
+        data[1] = address.toByte();
         for (i = 0, j = 2; i < 6; i++, j++)
             data[j] = key[i];
         for (i = 0, j = 8; i < 4; i++, j++)
@@ -483,24 +472,6 @@ public class RaspRC522 {
         return status;
     }
 
-    /**
-     * Authenticates to use specified block in given sector. Tag must
-     * be selected using select_tag(uid) before auth.
-     *
-     * @param auth_mode RFID.auth_a or RFID.auth_b
-     * @param sector Sector containing block to unlock.
-     * @param block Address Block to unlock.
-     * @param key  Six bytes encryption key.
-     * @param uid Uid (4 bytes) for user to connect to.
-     * @return MI_OK if successful, else an MI_ error code.
-     */
-    public int authCard(byte auth_mode, byte sector, byte block,
-                         byte[] key, byte[] uid)
-    {
-        return
-            authCard(auth_mode, sector2BlockAddress(sector, block), key, uid);
-    }
-
     /** End operation initiated by authCard(). */
     public void stopCrypto() {
         clearBitMask(Status2Reg, (byte) 0x08);
@@ -510,11 +481,11 @@ public class RaspRC522 {
      * Read data from a block address. Block must be authenticated
      * using authCard() before calling read().
      *
-     * @param block_address Block number to read from
+     * @param address Block number to read from
      * @param back_data On successful return, holds data.
      * @return MI_OK if successful, else an MI_ error code.
      */
-    public int read(byte block_address, byte[] back_data) {
+    public int read(BlockAddress address, byte[] back_data) {
         int status;
         byte data[] = new byte[4];
         int back_bits[] = new int[1];
@@ -522,7 +493,7 @@ public class RaspRC522 {
         int i, j;
 
         data[0] = PICC_READ;
-        data[1] = block_address;
+        data[1] = address.toByte();
         calculateCRC(data);
         status = writeCard(PCD_TRANSCEIVE, data, data.length,
                             back_data, back_bits, backLen);
@@ -531,28 +502,17 @@ public class RaspRC522 {
         return status;
     }
 
-    /**
-     * Read data from block in given sector. Block must be authenticated
-     * using authCard() before calling read().
-     *
-     * @param sector Sector containing block.
-     * @param block Address Block number to read from
-     * @param back_data On successful return, holds data.
-     * @return MI_OK if successful, else an MI_ error code.
-     */
-    public int read(byte sector, byte block, byte[] back_data) {
-        return read(sector2BlockAddress(sector, block), back_data);
-    }
+
 
     /**
      * Write data to block in sector 0. Block must be authenticated
      * using authCard() before calling write().
      *
-     * @param block_address Block to read
+     * @param address Block to read
      * @param data On successful return, read data (16 bytes)
      * @return MI_OK if successful, else an MI_ error code.
      */
-    public int write(byte block_address, byte[] data) {
+    public int write(BlockAddress address, byte[] data) {
         int status;
         byte buff[] = new byte[4];
         byte buff_write[] = new byte[data.length + 2];
@@ -562,7 +522,7 @@ public class RaspRC522 {
         int i;
 
         buff[0] = PICC_WRITE;
-        buff[1] = block_address;
+        buff[1] = address.toByte();
         calculateCRC(buff);
         status = writeCard(PCD_TRANSCEIVE, buff, buff.length,
                             back_data, back_bits, backLen);
@@ -594,18 +554,6 @@ public class RaspRC522 {
         return status;
     }
 
-    /**
-     * Write data to block in given sector. Block must be authenticated
-     * using authCard() before calling write().
-     *
-     * @param block Address Block number to read from
-     * @param sector Sector containing block.
-     * @param data On successful return, holds data read.
-     * @return MI_OK if successful, else an MI_ error code.
-     */
-    public int write(byte sector, byte block, byte[] data) {
-        return write(sector2BlockAddress(sector, block), data);
-    }
 
     public byte[] dumpClassic1K(byte[] key, byte[] uid) {
         int i, status;
@@ -613,9 +561,10 @@ public class RaspRC522 {
         byte[] buff = new byte[16];
 
         for (i = 0; i < 64; i++) {
-            status = authCard(PICC_AUTHENT1A, (byte) i, key, uid);
+        	BlockAddress address = new BlockAddress(0, i);
+            status = authCard(PICC_AUTHENT1A, address, key, uid);
             if (status == MI_OK) {
-                status = read((byte) i, buff);
+                status = read(address, buff);
                 if (status == MI_OK)
                     System.arraycopy(buff, 0, data, i * 64, 16);
             }

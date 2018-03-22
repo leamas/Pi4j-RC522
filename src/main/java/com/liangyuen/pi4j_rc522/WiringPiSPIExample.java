@@ -44,7 +44,8 @@ public class WiringPiSPIExample {
 
         // Authenticate
 
-        status = rc522.authCard(RaspRC522.PICC_AUTHENT1A, sector, block, defaultkey, tagid);
+	BlockAddress blockAddress = new BlockAddress(sector, block);
+        status = rc522.authCard(RaspRC522.PICC_AUTHENT1A, blockAddress, defaultkey, tagid);
         if (status != RaspRC522.MI_OK) {
             logger.info("Authenticate error");
             return;
@@ -56,7 +57,7 @@ public class WiringPiSPIExample {
         byte[] keyB = new byte[] { (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF };
         System.arraycopy(keyA, 0, data, 0, 6);
         System.arraycopy(keyB, 0, data, 10, 6);
-        status = rc522.write(sector, block, data);
+        status = rc522.write(blockAddress, data);
         if (status == RaspRC522.MI_OK) {
             logger.info("Write data finished");
         } else {
