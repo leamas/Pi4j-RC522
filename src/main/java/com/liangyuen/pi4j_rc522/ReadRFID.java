@@ -17,10 +17,10 @@ public class ReadRFID {
     private static Logger logger =
         LogManager.getLogger(ReadRFID.class.getName());
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, RC522Exception {
         logger.info("Initiating ReadRFID test program");
         RaspRC522 rc522 = new RaspRC522();
-        int back_bits[] = new int[1];
+        int back_bits;
         ByteArray strUID;
         byte tagid[] = new byte[5];
 //      int i;
@@ -30,10 +30,12 @@ public class ReadRFID {
         byte sector = 15; //, block = 2;
         while (true) {
             Thread.sleep(2000);
-            if (rc522.setupTranscieve(RaspRC522.PICC_REQIDL, back_bits)
-                == RaspRC522.MI_OK)
-            {
-                logger.info("Detected:"+back_bits[0]);
+            try {
+                back_bits = rc522.setupTranscieve(RaspRC522.PICC_REQIDL);
+                logger.info("Detected:"+back_bits);
+            } catch (RC522Exception ex) {
+                logger.debug("No card detected");
+                continue;
             }
             if (rc522.antiColl(tagid) != RaspRC522.MI_OK)
             {

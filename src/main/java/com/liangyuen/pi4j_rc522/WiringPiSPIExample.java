@@ -18,14 +18,21 @@ public class WiringPiSPIExample {
 
     public static void main(String args[]) throws InterruptedException {
         RaspRC522 rc522 = new RaspRC522();
-        int back_len[] = new int[1];
+        int back_len;
         byte tagid[] = new byte[5];
         int i, status;
         String strUID;
         byte sector = 15, block = 3;
 
-        if (rc522.setupTranscieve(RaspRC522.PICC_REQIDL, back_len) == rc522.MI_OK)
-            logger.info("Detecte card:" + back_len[0]);
+
+        try {
+             back_len = rc522.setupTranscieve(RaspRC522.PICC_REQIDL);
+            logger.info("Detected card:" + back_len);
+        }
+        catch (RC522Exception ex) {
+            logger.info("No card detected");
+            return;
+        }
         if (rc522.antiColl(tagid) != RaspRC522.MI_OK) {
             logger.info("anticoll error");
             return;
@@ -44,7 +51,7 @@ public class WiringPiSPIExample {
 
         // Authenticate
 
-	BlockAddress blockAddress = new BlockAddress(sector, block);
+        BlockAddress blockAddress = new BlockAddress(sector, block);
         status = rc522.authCard(RaspRC522.PICC_AUTHENT1A, blockAddress, defaultkey, tagid);
         if (status != RaspRC522.MI_OK) {
             logger.info("Authenticate error");

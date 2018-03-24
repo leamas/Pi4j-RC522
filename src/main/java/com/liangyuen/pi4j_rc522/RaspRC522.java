@@ -350,11 +350,12 @@ public class RaspRC522 {
      * Setup up transcieve operation mode.
      *
      * @param req_mode a PICC_ mode request
-     * @param back_bits out, on return backbits[0] is number of bits in fifo.
-     * @return MI_OK if successful, else a MI_ error code.
+     * @return number of bits
+     * @throws RC522Exception if writing data to card fails.
      */
-    public int setupTranscieve(byte req_mode, int[] back_bits) {
+    public int setupTranscieve(byte req_mode) throws RC522Exception {
         int status;
+        int[] back_bits = new int[1];
         byte tagType[] = new byte[1];
         byte data_back[] = new byte[16];
         int backLen[] = new int[1];
@@ -368,10 +369,10 @@ public class RaspRC522 {
         if (status != MI_OK || back_bits[0] != 0x10) {
             logger.debug("setupTranscieve, status: %d, back_bits[0]: %d",
                          status,  back_bits[0]);
-            status = MI_ERR;
+            throw new RC522Exception(status, "setupTranscieve: write error");
         }
 
-        return status;
+        return back_bits[0];
     }
 
 
@@ -561,7 +562,7 @@ public class RaspRC522 {
         byte[] buff = new byte[16];
 
         for (i = 0; i < 64; i++) {
-        	BlockAddress address = new BlockAddress(0, i);
+            BlockAddress address = new BlockAddress(0, i);
             status = authCard(PICC_AUTHENT1A, address, key, uid);
             if (status == MI_OK) {
                 status = read(address, buff);
@@ -573,20 +574,18 @@ public class RaspRC522 {
     }
 
     // uid-5 bytes
-    public int selectMirareOne(byte[] uid) {
-        int back_bits[] = new int[1];
+    public int selectMirareOne(byte[] uid) throws RC522Exception {
+        int back_bits;
         byte tagid[] = new byte[5];
         int status;
 
-        status = setupTranscieve(RaspRC522.PICC_REQIDL, back_bits);
-        if (status != MI_OK)
-            return status;
+        back_bits = setupTranscieve(RaspRC522.PICC_REQIDL);
         status = antiColl(tagid);
         if (status != MI_OK)
             return status;
         selectTag(tagid);
         System.arraycopy(tagid, 0, uid, 0, 5);
 
-        return status;
+        return back_bits;
     }
 }

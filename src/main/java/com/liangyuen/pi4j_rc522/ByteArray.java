@@ -23,7 +23,7 @@ public class ByteArray {
      * @return The internal list of bytes as an array.
      * @throws RC522Exception Lazy construction error.
     */
-    public byte[] toBytes()
+    public byte[] toBytes() throws RC522Exception
     {
         byte[] returnBytes = new byte[bytes.size()];
         for (int i = 0; i < bytes.size(); i += 1)
