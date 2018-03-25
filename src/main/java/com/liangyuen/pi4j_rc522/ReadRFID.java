@@ -22,7 +22,7 @@ public class ReadRFID {
         RaspRC522 rc522 = new RaspRC522();
         int back_bits;
         ByteArray strUID;
-        byte tagid[] = new byte[5];
+        Uid uid;
 //      int i;
         int status;
 //      byte blockaddress = 8;
@@ -37,24 +37,23 @@ public class ReadRFID {
                 logger.debug("No card detected");
                 continue;
             }
-            if (rc522.antiColl(tagid) != RaspRC522.MI_OK)
-            {
+            uid = (rc522.antiColl());
+            if (uid.isFailed()) {
                 logger.debug("anticoll error");
                 continue;
             }
 
-            int size=rc522.selectTag(tagid);
+            int size=rc522.selectTag(uid.toBytes());
             logger.debug("Size="+size);
 
 //          rc522.selectMirareOne(tagid);
-            strUID = new ByteArray(tagid);
             // System.out.println(strUID);
-            logger.debug("New UID: " + strUID.toString(","));
+            logger.debug("New UID: " + uid.toString(","));
 
             // Authenticate
             byte data[] = new byte[16];
             status = rc522.authCard(RaspRC522.PICC_AUTHENT1A, address,
-                                    KEY_A.toBytes(), tagid);
+                                    KEY_A.toBytes(), uid.toBytes());
             if (status != RaspRC522.MI_OK) {
                 logger.info("Authenticate A error");
                 continue;

@@ -379,13 +379,12 @@ public class RaspRC522 {
     /**
      * Check if there is a valid tag to communicate with out there.
      *
-     * @param back_data On successful return, contains the located tag id
-     *                  as five bytes.
-     * @return MI_OK if successful, else an MI_ error code.
+     * @return A Uid with a five bytes tag id or isFailed() error condition.
      */
-    public int antiColl(byte[] back_data) {
+    public Uid antiColl() {
         int status;
         byte[] serial_number = new byte[2];
+        byte[] back_data = new byte[5];
         int serial_number_check = 0;
         int backLen[] = new int[1];
         int back_bits[] = new int[1];
@@ -396,20 +395,7 @@ public class RaspRC522 {
         serial_number[1] = 0x20;
         status = writeCard(PCD_TRANSCEIVE, serial_number, 2,
                             back_data, back_bits, backLen);
-        if (status == MI_OK) {
-            if (backLen[0] == 5) {
-                for (i = 0; i < 4; i++)
-                    serial_number_check ^= back_data[i];
-                if (serial_number_check != back_data[4]) {
-                    status = MI_ERR;
-                    logger.warn("anticoll check error");
-                }
-            } else {
-                status = MI_OK;
-                logger.info("antiColl, backLen[0]: " + backLen[0]);
-            }
-        }
-        return status;
+        return status == MI_OK ? new Uid(back_data) : new Uid(back_data);
     }
 
     /**
@@ -574,18 +560,14 @@ public class RaspRC522 {
     }
 
     // uid-5 bytes
-    public int selectMirareOne(byte[] uid) throws RC522Exception {
-        int back_bits;
-        byte tagid[] = new byte[5];
-        int status;
+    public Uid selectMirareOne() throws RC522Exception {
+        Uid uid;
 
-        back_bits = setupTranscieve(RaspRC522.PICC_REQIDL);
-        status = antiColl(tagid);
-        if (status != MI_OK)
-            return status;
-        selectTag(tagid);
-        System.arraycopy(tagid, 0, uid, 0, 5);
-
-        return back_bits;
+        setupTranscieve(RaspRC522.PICC_REQIDL);
+        uid = antiColl();
+        if (uid.isFailed())
+            return uid;
+        selectTag(uid.toBytes());
+        return uid;
     }
 }
