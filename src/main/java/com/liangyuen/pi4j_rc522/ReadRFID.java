@@ -17,7 +17,8 @@ public class ReadRFID {
     private static Logger logger =
         LogManager.getLogger(ReadRFID.class.getName());
 
-    public static void main(String[] args) throws InterruptedException, RC522Exception {
+    public static void main(String[] args)
+            throws InterruptedException, RC522Exception {
         logger.info("Initiating ReadRFID test program");
         RaspRC522 rc522 = new RaspRC522();
         int back_bits;
@@ -69,12 +70,20 @@ public class ReadRFID {
                 logger.info("Authenticate A error");
                 continue;
             }
-            status = rc522.read(new BlockAddress(0, 3), data);
-            logger.info("Successfully authenticated,Read data: "
-                        + new ByteArray(data).toString());
-            status = rc522.read(new BlockAddress(0, 3), data);
-            logger.info("Read control block data: "
-                        + new ByteArray(data).toString());
+            try {
+                Block block = rc522.read(new BlockAddress(0, 3));
+                logger.info("Authenticated, read data: " + block.toString());
+            }
+            catch (RC522Exception ex) {
+                logger.debug("Cannot authenticate");
+            }
+            try {
+                Block block = rc522.read(new BlockAddress(0, 3));
+                logger.info("Read control block data: " + block.toString());
+            }
+            catch (RC522Exception ex) {
+                logger.debug("Cannot read control block");
+            }
             rc522.stopCrypto();
 //
 //      for (i = 0; i < 16; i++) {

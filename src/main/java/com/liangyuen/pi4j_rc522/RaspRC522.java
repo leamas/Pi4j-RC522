@@ -403,7 +403,7 @@ public class RaspRC522 {
      *
      * @param uid UID to select, five bytes.
      * @return Read data from analog fifo if available, else 0.
-     * @throws RC522Exception
+     * @throws RC522Exception  Write card errors.
      */
     public int selectTag(Uid uid) throws RC522Exception {
         int status;
@@ -433,7 +433,7 @@ public class RaspRC522 {
      * @param key  six bytes key.
      * @param uid uid (4 bytes) for user to connect to.
      * @return MI_OK if successful, else an MI_ error code.
-     * @throws RC522Exception
+     * @throws RC522Exception Write card errors.
      */
     public int authCard(byte auth_mode, BlockAddress address,
                         Key key, Uid uid)
@@ -470,11 +470,12 @@ public class RaspRC522 {
      * using authCard() before calling read().
      *
      * @param address Block number to read from
-     * @param back_data On successful return, holds data.
-     * @return MI_OK if successful, else an MI_ error code.
+     * @return A valid Block.
+     * @throws RC522Exception on read errors.
      */
-    public int read(BlockAddress address, byte[] back_data) {
+    public Block read(BlockAddress address) throws RC522Exception {
         int status;
+        byte[] back_data = new byte[MAX_LEN];
         byte data[] = new byte[4];
         int back_bits[] = new int[1];
         int backLen[] = new int[1];
@@ -484,10 +485,12 @@ public class RaspRC522 {
         data[1] = address.toByte();
         calculateCRC(data);
         status = writeCard(PCD_TRANSCEIVE, data, data.length,
-                            back_data, back_bits, backLen);
+                           back_data, back_bits, backLen);
         if (backLen[0] == 16)
             status = MI_OK;
-        return status;
+        if (status != MI_OK)
+            throw new RC522Exception(status, "Block read error");
+        return new Block(back_data, back_bits[0]);   // FIXME: Handle back_bits.
     }
 
 
@@ -543,21 +546,24 @@ public class RaspRC522 {
     }
 
 
-    public byte[] dumpClassic1K(Key key, Uid uid) throws RC522Exception {
+    public ByteArray dumpClassic1K(Key key, Uid uid) throws RC522Exception {
         int i, status;
         byte[] data = new byte[1024];
         byte[] buff = new byte[16];
+        Block block;
 
         for (i = 0; i < 64; i++) {
             BlockAddress address = new BlockAddress(0, i);
             status = authCard(PICC_AUTHENT1A, address, key, uid);
-            if (status == MI_OK) {
-                status = read(address, buff);
-                if (status == MI_OK)
-                    System.arraycopy(buff, 0, data, i * 64, 16);
+            try {
+                block = read(address);
+                System.arraycopy(block.toBytes(), 0, data, i * 64, 16);
+            }
+            catch (RC522Exception ex) {
+                continue;
             }
         }
-        return data;
+        return new ByteArray(data);
     }
 
     // uid-5 bytes
