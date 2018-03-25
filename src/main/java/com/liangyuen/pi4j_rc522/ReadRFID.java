@@ -43,7 +43,7 @@ public class ReadRFID {
                 continue;
             }
 
-            int size=rc522.selectTag(uid.toBytes());
+            int size=rc522.selectTag(uid);
             logger.debug("Size="+size);
 
 //          rc522.selectMirareOne(tagid);

@@ -404,7 +404,7 @@ public class RaspRC522 {
      * @param uid UID to select, five bytes.
      * @return Read data from analog fifo if available, else 0.
      */
-    public int selectTag(byte[] uid) {
+    public int selectTag(Uid uid) {
         int status;
         byte data[] = new byte[9];
         byte back_data[] = new byte[this.MAX_LEN];
@@ -415,15 +415,12 @@ public class RaspRC522 {
         data[0] = PICC_SElECTTAG;
         data[1] = 0x70;
         for (i = 0, j = 2; i < 5; i++, j++)
-            data[j] = uid[i];
+            data[j] = uid.toBytes()[i];
         calculateCRC(data);
 
         status = writeCard(PCD_TRANSCEIVE, data, 9,
-                            back_data, back_bits, backLen);
-        if (status == MI_OK && back_bits[0] == 0x18)
-            return back_data[0];
-        else
-            return 0;
+                           back_data, back_bits, backLen);
+        return status == MI_OK && back_bits[0] == 0x18 ? back_data[0] : 0;
     }
 
     /**
@@ -567,7 +564,7 @@ public class RaspRC522 {
         uid = antiColl();
         if (uid.isFailed())
             return uid;
-        selectTag(uid.toBytes());
+        selectTag(uid);
         return uid;
     }
 }

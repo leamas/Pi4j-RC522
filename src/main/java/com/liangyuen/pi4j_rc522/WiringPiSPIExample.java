@@ -46,7 +46,7 @@ public class WiringPiSPIExample {
 
         byte[] defaultkey = new byte[] { (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF };
         // Select the scanned tag
-        int size = rc522.selectTag(uid.toBytes());
+        int size = rc522.selectTag(uid);
         logger.info("Size=" + size);
 
         // Authenticate
