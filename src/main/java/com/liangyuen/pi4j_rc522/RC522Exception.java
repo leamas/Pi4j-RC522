@@ -4,7 +4,6 @@ package com.liangyuen.pi4j_rc522;
 /** A pi4j_rc522 call not returning MI_OK. */
 public class RC522Exception extends Exception {
 
-
     private static final long serialVersionUID = 1L;
 
     protected int errorCode;
@@ -26,5 +25,4 @@ public class RC522Exception extends Exception {
     public String toString() {
         return super.toString() + "code: " + errorCode;
     }
-
 }

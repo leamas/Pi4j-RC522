@@ -64,12 +64,11 @@ public class WiringPiSPIExample {
         Key keyB = new Key("ff:ff:ff:ff:ff:ff");
         System.arraycopy(keyA.toBytes(), 0, data, 0, 6);
         System.arraycopy(keyB.toBytes(), 0, data, 10, 6);
-        status = rc522.write(blockAddress, data);
-        if (status == RaspRC522.MI_OK) {
-            logger.info("Write data finished");
-        } else {
-            logger.info("Write data error,status=" + status);
-            return;
+        try {
+            rc522.write(blockAddress, new Block(data));
+        }
+        catch (RC522Exception ex) {
+            logger.info("Write data error,status=" + ex.getErrorCode());
         }
     }
 }

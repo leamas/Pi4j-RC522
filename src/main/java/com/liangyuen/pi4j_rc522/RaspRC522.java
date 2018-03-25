@@ -345,6 +345,22 @@ public class RaspRC522 {
         data[data.length - 1] = readRC522(CRCResultRegM);
     }
 
+    private void doWrite(byte[] buff) throws RC522Exception
+    {
+        int bits[] = new int[1];
+        byte data[] = new byte[this.MAX_LEN];
+        int dataLen[] = new int[1];
+
+        int status = writeCard(PCD_TRANSCEIVE, buff, buff.length,
+                               data, bits, dataLen);
+        logger.debug("write_card status: %d, bits[0]: %d, data[0]: 0x%x",
+                     status, bits[0], data[0]);
+        if (status != MI_OK)
+            throw new RC522Exception(status, "Cannot write card");
+        if (bits[0] != 4 || (data[0] & 0x0F) != 0x0A)
+            throw new RC522Exception(MI_ERR, "data/bits error");
+    }
+
 
     /**
      * Setup up transcieve operation mode.
@@ -479,7 +495,6 @@ public class RaspRC522 {
         byte data[] = new byte[4];
         int back_bits[] = new int[1];
         int backLen[] = new int[1];
-        int i, j;
 
         data[0] = PICC_READ;
         data[1] = address.toByte();
@@ -493,56 +508,30 @@ public class RaspRC522 {
         return new Block(back_data, back_bits[0]);   // FIXME: Handle back_bits.
     }
 
-
-
     /**
-     * Write data to block address. Block must be authenticated
+     * Write data to block at given address. Block must be authenticated
      * using authCard() before calling write().
      *
-     * @param address Block to read
-     * @param data On successful return, read data (16 bytes)
-     * @return MI_OK if successful, else an MI_ error code.
+     * @param address Block address to modify.
+     * @param block Data to update address.
+     * @throws RC522Exception Write errors.
      */
-    public int write(BlockAddress address, byte[] data) {
-        int status;
+    public void write(BlockAddress address, Block block)
+        throws RC522Exception
+    {
         byte buff[] = new byte[4];
-        byte buff_write[] = new byte[data.length + 2];
-        byte back_data[] = new byte[this.MAX_LEN];
-        int back_bits[] = new int[1];
-        int backLen[] = new int[1];
-        int i;
+        byte buff_write[] = new byte[block.toBytes().length + 2];
 
         buff[0] = PICC_WRITE;
         buff[1] = address.toByte();
         calculateCRC(buff);
-        status = writeCard(PCD_TRANSCEIVE, buff, buff.length,
-                            back_data, back_bits, backLen);
-        logger.debug("write_card status: "+status);
-        logger.debug("back_bits[0]: %d, back_data[0]: 0x%x",
-                     back_bits[0], back_data[0]);
-        if (status != MI_OK || back_bits[0] != 4
-            || (back_data[0] & 0x0F) != 0x0A) {
-                logger.debug("write: status/backbits error: status: " + status);
-            status = MI_ERR;
-        }
-        if (status == MI_OK) {
-            for (i = 0; i < data.length; i++)
-                buff_write[i] = data[i];
-            calculateCRC(buff_write);
-            status = writeCard(PCD_TRANSCEIVE,
-                                buff_write, buff_write.length,
-                                back_data, back_bits, backLen);
-            logger.debug("write_card data status: " + status);
-            logger.debug("back_bits[0]: %d, back_data[0] : 0x%x",
-                         back_bits[0], back_data[0]);
-            if (status != MI_OK || back_bits[0] != 4
-                || (back_data[0] & 0x0F) != 0x0A) {
-                    logger.debug("write: status/backbits error 2: status: "
-                                 + status);
-                    status = MI_ERR;
-            }
-        }
-        return status;
+        logger.debug("write: Running PICC_WRITE command");
+        doWrite(buff);
+        for (int i = 0; i < block.toBytes().length; i++)
+            buff_write[i] = block.toBytes()[i];
+        calculateCRC(buff_write);
+        logger.debug("write: writing data");
+        doWrite(buff);
     }
 
 
