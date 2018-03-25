@@ -401,10 +401,9 @@ public class RaspRC522 {
         int status;
         byte[] serial_number = new byte[2];
         byte[] back_data = new byte[5];
-        int serial_number_check = 0;
         int backLen[] = new int[1];
         int back_bits[] = new int[1];
-        int i;
+
 
         writeRC522(BitFramingReg, (byte) 0x00);
         serial_number[0] = PICC_ANTICOLL;
@@ -538,7 +537,6 @@ public class RaspRC522 {
     public ByteArray dumpClassic1K(Key key, Uid uid) throws RC522Exception {
         int i, status;
         byte[] data = new byte[1024];
-        byte[] buff = new byte[16];
         Block block;
 
         for (i = 0; i < 64; i++) {
