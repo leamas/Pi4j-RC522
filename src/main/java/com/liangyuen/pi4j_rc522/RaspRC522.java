@@ -403,8 +403,9 @@ public class RaspRC522 {
      *
      * @param uid UID to select, five bytes.
      * @return Read data from analog fifo if available, else 0.
+     * @throws RC522Exception
      */
-    public int selectTag(Uid uid) {
+    public int selectTag(Uid uid) throws RC522Exception {
         int status;
         byte data[] = new byte[9];
         byte back_data[] = new byte[this.MAX_LEN];
@@ -424,7 +425,7 @@ public class RaspRC522 {
     }
 
     /**
-     * Authenticates to use specified block in sector 0. Tag must be selected
+     * Authenticates to use specified block. Tag must be selected
      * using select_tag(uid) before auth.
      *
      * @param auth_mode RaspRC522.auth_a or RaspRC522.auth_b
@@ -432,9 +433,12 @@ public class RaspRC522 {
      * @param key  six bytes key.
      * @param uid uid (4 bytes) for user to connect to.
      * @return MI_OK if successful, else an MI_ error code.
+     * @throws RC522Exception
      */
     public int authCard(byte auth_mode, BlockAddress address,
-                         byte[] key, byte[] uid) {
+                        Key key, Uid uid)
+        throws RC522Exception
+    {
         int status;
         byte data[] = new byte[12];
         byte back_data[] = new byte[this.MAX_LEN];
@@ -445,9 +449,9 @@ public class RaspRC522 {
         data[0] = auth_mode;
         data[1] = address.toByte();
         for (i = 0, j = 2; i < 6; i++, j++)
-            data[j] = key[i];
+            data[j] = key.toBytes()[i];
         for (i = 0, j = 8; i < 4; i++, j++)
-            data[j] = uid[i];
+            data[j] = uid.toBytes()[i];
 
         status = writeCard(PCD_AUTHENT, data, 12,
                             back_data, back_bits, backLen);
@@ -489,7 +493,7 @@ public class RaspRC522 {
 
 
     /**
-     * Write data to block in sector 0. Block must be authenticated
+     * Write data to block address. Block must be authenticated
      * using authCard() before calling write().
      *
      * @param address Block to read
@@ -539,7 +543,7 @@ public class RaspRC522 {
     }
 
 
-    public byte[] dumpClassic1K(byte[] key, byte[] uid) {
+    public byte[] dumpClassic1K(Key key, Uid uid) throws RC522Exception {
         int i, status;
         byte[] data = new byte[1024];
         byte[] buff = new byte[16];

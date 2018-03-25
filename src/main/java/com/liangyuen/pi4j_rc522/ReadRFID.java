@@ -12,8 +12,8 @@ import org.apache.logging.log4j.Logger;
 import com.pi4j.wiringpi.Spi;
 
 public class ReadRFID {
-    static ByteArray KEY_A = new ByteArray("ff:ff:ff:ff:ff:ff");
-    static ByteArray KEY_B = new ByteArray("ff:ff:ff:ff:ff:ff");
+    static Key KEY_A = new Key("ff:ff:ff:ff:ff:ff");
+    static Key KEY_B = new Key("ff:ff:ff:ff:ff:ff");
     private static Logger logger =
         LogManager.getLogger(ReadRFID.class.getName());
 
@@ -24,7 +24,7 @@ public class ReadRFID {
         ByteArray strUID;
         Uid uid;
 //      int i;
-        int status;
+        int status = 0;
 //      byte blockaddress = 8;
         BlockAddress address = new BlockAddress(15, 2);
         byte sector = 15; //, block = 2;
@@ -43,8 +43,14 @@ public class ReadRFID {
                 continue;
             }
 
-            int size=rc522.selectTag(uid);
-            logger.debug("Size="+size);
+            try {
+                int size=rc522.selectTag(uid);
+                logger.debug("Size="+size);
+            }
+            catch (RC522Exception ex) {
+            	logger.debug("Cannot select: " + ex.getMessage());
+            	continue;
+            }
 
 //          rc522.selectMirareOne(tagid);
             // System.out.println(strUID);
@@ -52,8 +58,13 @@ public class ReadRFID {
 
             // Authenticate
             byte data[] = new byte[16];
-            status = rc522.authCard(RaspRC522.PICC_AUTHENT1A, address,
-                                    KEY_A.toBytes(), uid.toBytes());
+            try {
+                status = rc522.authCard(RaspRC522.PICC_AUTHENT1A, address,
+                                        KEY_A, uid);
+            }
+            catch (RC522Exception ex) {
+            	logger.info("Cannot authenticate: %d", status);
+            }
             if (status != RaspRC522.MI_OK) {
                 logger.info("Authenticate A error");
                 continue;
