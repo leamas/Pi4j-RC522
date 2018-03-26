@@ -33,7 +33,24 @@
                         <exclude>**/WiringPiSPIExample*</exclude>
                     </excludes>
                 </configuration>
-	    </plugin>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.0.0</version>
+                <configuration>
+                    <sourceFileExcludes>
+                        <sourceFileExclude>
+                            **/ReadRFID*.java
+                        </sourceFileExclude>
+                        <sourceFileExclude>
+                            **/WiringPiSPIExample.java
+                        </sourceFileExclude>
+                    </sourceFileExcludes>
+                    <linksource>true</linksource>
+                </configuration>
+            </plugin>
+>>>>>>> cc43f1f... pomfix
         </plugins>
     </build>
 </project>
